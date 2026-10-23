@@ -21,7 +21,7 @@ npm query .workspace | node -e 'for (const p of JSON.parse(require("fs").readFil
 - Node 24+ (`engines` in every package). `nvm use 24` if needed.
 - An `origin` remote must exist: steps 5, 6 and 8 push to it.
 - npm login with 2FA — OTP needed at step 7.
-- The `@agent-protocols` scope must exist on npm and include the logged-in user, or the first publish fails.
+- The logged-in user must be able to publish to the `@jambudipa` scope (it already holds `@jambudipa/spider`), or the first publish fails.
 - For scoped packages, `publishConfig.access` must be `public` (already set in each package, and `access` is `public` in `.changeset/config.json`).
 
 ```bash
@@ -30,7 +30,7 @@ git status --porcelain && git branch --show-current
 git remote get-url origin
 npm whoami || npm login
 npm config get registry
-npm org ls agent-protocols
+npm access list packages @jambudipa
 ```
 
 If any check fails, stop and report.
@@ -61,7 +61,7 @@ Three cases:
    mkdir -p .changeset
    cat > ".changeset/auto-$(date +%s).md" <<EOF
    ---
-   "@agent-protocols/<name>": ${BUMP}
+   "@jambudipa/<name>": ${BUMP}
    ---
 
    ${SUMMARY}
@@ -96,7 +96,7 @@ Any failure aborts the release. Fix root cause; do not bypass.
 # --ignore-scripts: step 2 already built dist/, and the prepack build output would corrupt the JSON
 npm pack --dry-run --json --ignore-scripts --workspaces | tee .npm-pack-preview.json
 # Optional tarball inspection, per package
-PKG_TGZ=$(npm pack -w "@agent-protocols/<name>" --ignore-scripts)
+PKG_TGZ=$(npm pack -w "@jambudipa/<name>" --ignore-scripts)
 tar -tzf "$PKG_TGZ" | head -n 50
 ```
 
@@ -123,7 +123,7 @@ Confirm intermediate commits have **not** been pushed to `origin/$BASE` — othe
 ```bash
 git fetch origin
 
-LAST_TAG=$(git tag --list '@agent-protocols/*' --sort=-creatordate | head -n1 || echo "")
+LAST_TAG=$(git tag --list '@jambudipa/*' --sort=-creatordate | head -n1 || echo "")
 REMOTE_BASE=$(git rev-parse "origin/${BASE}")
 echo "Last tag: ${LAST_TAG:-<none>}"
 echo "Remote ${BASE}: $REMOTE_BASE"
@@ -140,7 +140,7 @@ If the warning fires, **stop and confirm with the user** before proceeding. Forc
 ### 5b. Squash
 
 ```bash
-LAST_TAG=$(git tag --list '@agent-protocols/*' --sort=-creatordate | head -n1 || echo "")
+LAST_TAG=$(git tag --list '@jambudipa/*' --sort=-creatordate | head -n1 || echo "")
 
 if [ -n "$LAST_TAG" ]; then
   git reset --soft "$LAST_TAG"
@@ -199,7 +199,7 @@ Resolve auth *before* step 5, not after: a pushed release commit and tag for a v
 
 ## 8. Create and push tags
 
-We bypassed `changeset publish`, so the tags must be created manually, one for each published package. Changesets format: `@scope/name@version` (e.g. `@agent-protocols/agent-protocol@0.1.0`).
+We bypassed `changeset publish`, so the tags must be created manually, one for each published package. Changesets format: `@scope/name@version` (e.g. `@jambudipa/agent-protocol@0.1.0`).
 
 ```bash
 for PKG in <published package names>; do

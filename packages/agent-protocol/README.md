@@ -1,4 +1,4 @@
-# @agent-protocols/agent-protocol
+# @jambudipa/agent-protocol
 
 [Agent Protocol v1](https://github.com/AI-Engineer-Foundation/agent-protocol)
 for Effect v4: a server, a typed client and the OpenAPI document, all derived
@@ -12,7 +12,7 @@ not have.
 ## Install
 
 ```sh
-npm install @agent-protocols/agent-protocol effect@~4.0.6 @effect/platform-node@~4.0.6
+npm install @jambudipa/agent-protocol effect@~4.0.6 @effect/platform-node@~4.0.6
 ```
 
 `effect` and `@effect/platform-node` are peer dependencies.
@@ -22,8 +22,8 @@ npm install @agent-protocols/agent-protocol effect@~4.0.6 @effect/platform-node@
 ```ts
 import { NodeRuntime } from '@effect/platform-node';
 import { Effect, Layer, Option, Ref } from 'effect';
-import { StepResult, type TaskHandler } from '@agent-protocols/agent-protocol';
-import * as AgentProtocolNode from '@agent-protocols/agent-protocol/node';
+import { StepResult, type TaskHandler } from '@jambudipa/agent-protocol';
+import * as AgentProtocolNode from '@jambudipa/agent-protocol/node';
 
 // Runs once for each new task, and returns the step handler of that task.
 const taskHandler: TaskHandler = Effect.fnUntraced(function* (task) {
@@ -74,7 +74,7 @@ type StepHandler = (
 ```ts
 import { FetchHttpClient } from 'effect/http';
 import { Effect, Layer, Option } from 'effect';
-import { AgentProtocolClient } from '@agent-protocols/agent-protocol';
+import { AgentProtocolClient } from '@jambudipa/agent-protocol';
 
 const program = Effect.gen(function* () {
   const client = yield* AgentProtocolClient;

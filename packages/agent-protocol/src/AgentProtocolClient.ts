@@ -32,7 +32,7 @@ export interface Options {
 export class AgentProtocolClient extends Context.Service<
   AgentProtocolClient,
   HttpApiClient.ForApi<typeof AgentProtocolApi>
->()('@agent-protocols/agent-protocol/AgentProtocolClient') {
+>()('@jambudipa/agent-protocol/AgentProtocolClient') {
   /**
    * Builds the client on the `HttpClient` in the context.
    *

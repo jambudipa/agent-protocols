@@ -42,7 +42,7 @@ import {
  * @since 0.1.0
  */
 export class RequestDecodeErrors extends HttpApiMiddleware.Service<RequestDecodeErrors>()(
-  '@agent-protocols/agent-protocol/Api/RequestDecodeErrors'
+  '@jambudipa/agent-protocol/Api/RequestDecodeErrors'
 ) {}
 
 const TaskParams = { task_id: TaskId };

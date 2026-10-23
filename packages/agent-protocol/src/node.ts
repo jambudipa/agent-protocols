@@ -6,7 +6,7 @@
  * ```ts
  * import { NodeRuntime } from "@effect/platform-node"
  * import { Layer } from "effect"
- * import * as AgentProtocolNode from "@agent-protocols/agent-protocol/node"
+ * import * as AgentProtocolNode from "@jambudipa/agent-protocol/node"
  *
  * Layer.launch(AgentProtocolNode.layer(taskHandler, { port: 8000 })).pipe(NodeRuntime.runMain)
  * ```

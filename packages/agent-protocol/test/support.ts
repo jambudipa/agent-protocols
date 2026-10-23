@@ -12,7 +12,7 @@ import type { TaskHandler } from '../src/index.js';
 export class TestWorkspace extends Context.Service<
   TestWorkspace,
   { readonly directory: string }
->()('@agent-protocols/agent-protocol/test/TestWorkspace') {
+>()('@jambudipa/agent-protocol/test/TestWorkspace') {
   static readonly layer = Layer.effect(
     TestWorkspace,
     Effect.gen(function* () {

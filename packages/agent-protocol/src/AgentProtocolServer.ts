@@ -3,7 +3,7 @@
  * task store, and artifact files in a workspace directory.
  *
  * `layer` registers the routes with an `HttpRouter`. Serve it with
- * `HttpRouter.serve` on any platform, or use `@agent-protocols/agent-protocol/node`
+ * `HttpRouter.serve` on any platform, or use `@jambudipa/agent-protocol/node`
  * for a ready Node server.
  *
  * @since 0.1.0

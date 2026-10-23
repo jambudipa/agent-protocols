@@ -1,0 +1,8 @@
+package-lock.json
+_bmad/
+_bmad-output/
+.claude/
+.idea/
+eslint/effect-rules.mjs
+eslint/effect-eslint-config.mjs
+packages/*/spec/

@@ -20,7 +20,9 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run clean && npm run build"
   },
   "peerDependencies": {
     "@effect/platform-node": "~4.0.6",

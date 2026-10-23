@@ -1,0 +1,11 @@
+{
+  // The build project for this package: runtime source only, emitted to
+  // `dist/` with declarations. Tests are type-checked by the root tsconfig.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true
+  },
+  "include": ["src/**/*.ts"]
+}

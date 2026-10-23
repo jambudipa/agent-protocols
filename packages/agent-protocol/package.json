@@ -1,0 +1,33 @@
+{
+  "name": "@agent-protocols/agent-protocol",
+  "version": "0.1.0",
+  "description": "Agent Protocol v1 server and client for Effect v4.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@effect/platform-node": "~4.0.6",
+    "effect": "~4.0.6"
+  },
+  "devDependencies": {
+    "@effect/platform-node": "~4.0.6",
+    "effect": "~4.0.6"
+  }
+}

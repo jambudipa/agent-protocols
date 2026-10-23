@@ -7,10 +7,10 @@
  *
  * @since 0.1.0
  */
-import { Effect, Option, Schema } from "effect"
-import type { StepFailed, TaskFailed } from "./Errors.js"
-import { Artifact, StepOutput } from "./Schemas.js"
-import type { StepRequestBody, Task } from "./Schemas.js"
+import { Effect, Option, Schema } from 'effect';
+import type { StepFailed, TaskFailed } from './Errors.js';
+import { Artifact, StepOutput } from './Schemas.js';
+import type { StepRequestBody, Task } from './Schemas.js';
 
 /**
  * What a step handler returns. Construct it with `new StepResult({ ... })` and
@@ -23,14 +23,22 @@ import type { StepRequestBody, Task } from "./Schemas.js"
  *
  * @since 0.1.0
  */
-export class StepResult extends Schema.Class<StepResult>("StepResult")({
-  name: Schema.Option(Schema.String).pipe(Schema.withConstructorDefault(Effect.succeed(Option.none()))),
-  output: Schema.Option(Schema.String).pipe(Schema.withConstructorDefault(Effect.succeed(Option.none()))),
+export class StepResult extends Schema.Class<StepResult>('StepResult')({
+  name: Schema.Option(Schema.String).pipe(
+    Schema.withConstructorDefault(Effect.succeed(Option.none()))
+  ),
+  output: Schema.Option(Schema.String).pipe(
+    Schema.withConstructorDefault(Effect.succeed(Option.none()))
+  ),
   additional_output: Schema.Option(StepOutput).pipe(
     Schema.withConstructorDefault(Effect.succeed(Option.none()))
   ),
-  artifacts: Schema.Array(Artifact).pipe(Schema.withConstructorDefault(Effect.succeed([]))),
-  is_last: Schema.Boolean.pipe(Schema.withConstructorDefault(Effect.succeed(false)))
+  artifacts: Schema.Array(Artifact).pipe(
+    Schema.withConstructorDefault(Effect.succeed([]))
+  ),
+  is_last: Schema.Boolean.pipe(
+    Schema.withConstructorDefault(Effect.succeed(false))
+  ),
 }) {}
 
 /**
@@ -39,11 +47,15 @@ export class StepResult extends Schema.Class<StepResult>("StepResult")({
  *
  * @since 0.1.0
  */
-export type StepHandler = (input: Option.Option<StepRequestBody>) => Effect.Effect<StepResult, StepFailed>
+export type StepHandler = (
+  input: Option.Option<StepRequestBody>
+) => Effect.Effect<StepResult, StepFailed>;
 
 /**
  * Starts a task and returns the step handler for it.
  *
  * @since 0.1.0
  */
-export type TaskHandler = (task: Task) => Effect.Effect<StepHandler, TaskFailed>
+export type TaskHandler = (
+  task: Task
+) => Effect.Effect<StepHandler, TaskFailed>;

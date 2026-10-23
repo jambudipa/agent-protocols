@@ -36,7 +36,10 @@ export default [
   },
 
   // The canonical config sets no parser, so typescript-eslint supplies it.
-  ...tseslint.configs.recommended.map((config) => ({ ...config, files: SOURCES })),
+  ...tseslint.configs.recommended.map((config) => ({
+    ...config,
+    files: SOURCES,
+  })),
 
   effectLintConfig(SOURCES),
 ];

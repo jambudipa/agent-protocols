@@ -13,12 +13,12 @@
  *
  * @since 0.1.0
  */
-import { NodeHttpServer } from "@effect/platform-node"
-import { Layer } from "effect"
-import { HttpRouter } from "effect/http"
-import { createServer } from "node:http"
-import * as AgentProtocolServer from "./AgentProtocolServer.js"
-import type { TaskHandler } from "./Handler.js"
+import { NodeHttpServer } from '@effect/platform-node';
+import { Layer } from 'effect';
+import { HttpRouter } from 'effect/http';
+import { createServer } from 'node:http';
+import * as AgentProtocolServer from './AgentProtocolServer.js';
+import type { TaskHandler } from './Handler.js';
 
 /**
  * Options of the Node server.
@@ -27,7 +27,7 @@ import type { TaskHandler } from "./Handler.js"
  */
 export interface Options extends AgentProtocolServer.Options {
   /** The port to listen on. The default is 8000, as in the reference SDK. */
-  readonly port?: number
+  readonly port?: number;
 }
 
 /**
@@ -35,7 +35,7 @@ export interface Options extends AgentProtocolServer.Options {
  *
  * @since 0.1.0
  */
-export const defaultPort = 8000
+export const defaultPort = 8000;
 
 /**
  * Serves the Agent Protocol with the given task handler on a Node HTTP server.
@@ -45,5 +45,7 @@ export const defaultPort = 8000
  */
 export const layer = (taskHandler: TaskHandler, options: Options = {}) =>
   HttpRouter.serve(AgentProtocolServer.layer(taskHandler, options)).pipe(
-    Layer.provide(NodeHttpServer.layer(createServer, { port: options.port ?? defaultPort }))
-  )
+    Layer.provide(
+      NodeHttpServer.layer(createServer, { port: options.port ?? defaultPort })
+    )
+  );

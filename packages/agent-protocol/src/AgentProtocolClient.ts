@@ -7,9 +7,9 @@
  *
  * @since 0.1.0
  */
-import { Context, Layer } from "effect"
-import { HttpApiClient } from "effect/http-api"
-import { AgentProtocolApi } from "./Api.js"
+import { Context, Layer } from 'effect';
+import { HttpApiClient } from 'effect/http-api';
+import { AgentProtocolApi } from './Api.js';
 
 /**
  * Options of the client.
@@ -21,7 +21,7 @@ export interface Options {
    * The URL of the agent, for example `http://localhost:8000`. Omit it when
    * the `HttpClient` already prepends the URL.
    */
-  readonly baseUrl?: string | URL
+  readonly baseUrl?: string | URL;
 }
 
 /**
@@ -32,7 +32,7 @@ export interface Options {
 export class AgentProtocolClient extends Context.Service<
   AgentProtocolClient,
   HttpApiClient.ForApi<typeof AgentProtocolApi>
->()("@agent-protocols/agent-protocol/AgentProtocolClient") {
+>()('@agent-protocols/agent-protocol/AgentProtocolClient') {
   /**
    * Builds the client on the `HttpClient` in the context.
    *
@@ -42,5 +42,5 @@ export class AgentProtocolClient extends Context.Service<
     Layer.effect(
       AgentProtocolClient,
       HttpApiClient.make(AgentProtocolApi, options)
-    )
+    );
 }

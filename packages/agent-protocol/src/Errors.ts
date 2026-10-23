@@ -8,20 +8,22 @@
  *
  * @since 0.1.0
  */
-import { Schema, SchemaTransformation } from "effect"
-import { HttpApiSchema } from "effect/http-api"
+import { Schema, SchemaTransformation } from 'effect';
+import { HttpApiSchema } from 'effect/http-api';
 
 const MessageBody = Schema.Struct({
-  message: Schema.String.annotate({ description: "Message stating the problem" })
-}).annotate({ identifier: "MessageBody" })
+  message: Schema.String.annotate({
+    description: 'Message stating the problem',
+  }),
+}).annotate({ identifier: 'MessageBody' });
 
 /**
  * The task, step or artifact with the given identifier does not exist.
  *
  * @since 0.1.0
  */
-export class NotFound extends Schema.TaggedError<NotFound>()("NotFound", {
-  message: Schema.String
+export class NotFound extends Schema.TaggedError<NotFound>()('NotFound', {
+  message: Schema.String,
 }) {}
 
 /**
@@ -34,14 +36,14 @@ export const NotFoundResponse = MessageBody.pipe(
     Schema.toType(NotFound),
     SchemaTransformation.transform({
       decode: (body) => new NotFound(body),
-      encode: (error) => ({ message: error.message })
+      encode: (error) => ({ message: error.message }),
     })
   ),
   HttpApiSchema.status(404)
 ).annotate({
-  identifier: "NotFound",
-  description: "Unable to find entity with a given identifier"
-})
+  identifier: 'NotFound',
+  description: 'Unable to find entity with a given identifier',
+});
 
 /**
  * The request did not decode: a bad path, query or body.
@@ -49,7 +51,7 @@ export const NotFoundResponse = MessageBody.pipe(
  * @since 0.1.0
  */
 export class UnprocessableEntity extends Schema.TaggedError<UnprocessableEntity>()(
-  "UnprocessableEntity",
+  'UnprocessableEntity',
   { message: Schema.String }
 ) {}
 
@@ -64,14 +66,15 @@ export const UnprocessableEntityResponse = MessageBody.pipe(
     Schema.toType(UnprocessableEntity),
     SchemaTransformation.transform({
       decode: (body) => new UnprocessableEntity(body),
-      encode: (error) => ({ message: error.message })
+      encode: (error) => ({ message: error.message }),
     })
   ),
   HttpApiSchema.status(422)
 ).annotate({
-  identifier: "UnprocessableEntity",
-  description: "Unable to process request. Likely due to improperly formatted request."
-})
+  identifier: 'UnprocessableEntity',
+  description:
+    'Unable to process request. Likely due to improperly formatted request.',
+});
 
 /**
  * The task handler could not start a task. The server answers with status 500
@@ -79,8 +82,8 @@ export const UnprocessableEntityResponse = MessageBody.pipe(
  *
  * @since 0.1.0
  */
-export class TaskFailed extends Schema.TaggedError<TaskFailed>()("TaskFailed", {
-  message: Schema.String
+export class TaskFailed extends Schema.TaggedError<TaskFailed>()('TaskFailed', {
+  message: Schema.String,
 }) {}
 
 /**
@@ -89,6 +92,6 @@ export class TaskFailed extends Schema.TaggedError<TaskFailed>()("TaskFailed", {
  *
  * @since 0.1.0
  */
-export class StepFailed extends Schema.TaggedError<StepFailed>()("StepFailed", {
-  message: Schema.String
+export class StepFailed extends Schema.TaggedError<StepFailed>()('StepFailed', {
+  message: Schema.String,
 }) {}

@@ -20,30 +20,31 @@ npm install @agent-protocols/agent-protocol effect@~4.0.6 @effect/platform-node@
 ## Serve an agent
 
 ```ts
-import { NodeRuntime } from "@effect/platform-node"
-import { Effect, Layer, Option, Ref } from "effect"
-import { StepResult, type TaskHandler } from "@agent-protocols/agent-protocol"
-import * as AgentProtocolNode from "@agent-protocols/agent-protocol/node"
+import { NodeRuntime } from '@effect/platform-node';
+import { Effect, Layer, Option, Ref } from 'effect';
+import { StepResult, type TaskHandler } from '@agent-protocols/agent-protocol';
+import * as AgentProtocolNode from '@agent-protocols/agent-protocol/node';
 
 // Runs once for each new task, and returns the step handler of that task.
-const taskHandler: TaskHandler = Effect.fnUntraced(function*(task) {
-  const steps = yield* Ref.make(0)
+const taskHandler: TaskHandler = Effect.fnUntraced(function* (task) {
+  const steps = yield* Ref.make(0);
   // Runs once for each step. `input` is `Option.none()` for a step without a body.
   return (input) =>
     Ref.updateAndGet(steps, (n) => n + 1).pipe(
-      Effect.map((n) =>
-        new StepResult({
-          name: Option.some(`step ${n}`),
-          output: Option.some(`task ${task.task_id}, step ${n}`),
-          is_last: n === 3
-        })
+      Effect.map(
+        (n) =>
+          new StepResult({
+            name: Option.some(`step ${n}`),
+            output: Option.some(`task ${task.task_id}, step ${n}`),
+            is_last: n === 3,
+          })
       )
-    )
-})
+    );
+});
 
-Layer.launch(AgentProtocolNode.layer(taskHandler, { port: 8000, workspace: "./workspace" })).pipe(
-  NodeRuntime.runMain
-)
+Layer.launch(
+  AgentProtocolNode.layer(taskHandler, { port: 8000, workspace: './workspace' })
+).pipe(NodeRuntime.runMain);
 ```
 
 The defaults are port 8000 and workspace `./workspace`, as in the reference SDK.
@@ -55,8 +56,10 @@ to `HttpRouter.serve` with that platform's HTTP server layer.
 ### Handler contract
 
 ```ts
-type TaskHandler = (task: Task) => Effect.Effect<StepHandler, TaskFailed>
-type StepHandler = (input: Option.Option<StepRequestBody>) => Effect.Effect<StepResult, StepFailed>
+type TaskHandler = (task: Task) => Effect.Effect<StepHandler, TaskFailed>;
+type StepHandler = (
+  input: Option.Option<StepRequestBody>
+) => Effect.Effect<StepResult, StepFailed>;
 ```
 
 - A `TaskFailed` from the task handler answers 500, and the server stores no task.
@@ -69,25 +72,30 @@ type StepHandler = (input: Option.Option<StepRequestBody>) => Effect.Effect<Step
 ## Call an agent
 
 ```ts
-import { FetchHttpClient } from "effect/http"
-import { Effect, Layer, Option } from "effect"
-import { AgentProtocolClient } from "@agent-protocols/agent-protocol"
+import { FetchHttpClient } from 'effect/http';
+import { Effect, Layer, Option } from 'effect';
+import { AgentProtocolClient } from '@agent-protocols/agent-protocol';
 
-const program = Effect.gen(function*() {
-  const client = yield* AgentProtocolClient
+const program = Effect.gen(function* () {
+  const client = yield* AgentProtocolClient;
   const task = yield* client.createAgentTask({
-    payload: { input: Option.some("Write 'Washington' to output.txt"), additional_input: Option.none() }
-  })
+    payload: {
+      input: Option.some("Write 'Washington' to output.txt"),
+      additional_input: Option.none(),
+    },
+  });
   const step = yield* client.executeAgentTaskStep({
     params: { task_id: task.task_id },
-    payload: { input: Option.none(), additional_input: Option.none() }
-  })
-  return step.output
+    payload: { input: Option.none(), additional_input: Option.none() },
+  });
+  return step.output;
 }).pipe(
   Effect.provide(
-    AgentProtocolClient.layer({ baseUrl: "http://localhost:8000" }).pipe(Layer.provide(FetchHttpClient.layer))
+    AgentProtocolClient.layer({ baseUrl: 'http://localhost:8000' }).pipe(
+      Layer.provide(FetchHttpClient.layer)
+    )
   )
-)
+);
 ```
 
 Each client method is named after its `operationId` in the specification. Upload

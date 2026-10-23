@@ -6,12 +6,12 @@ These answers close the intent gap that halted the first bmad-build-auto run.
 
 ### Protocols and packages
 
-| Layer | Protocol | Package | Parity target |
-| --- | --- | --- | --- |
-| Agent to tools | MCP | none | Reuse `effect/ai` `McpClient` and `McpServer` from `effect@4.0.6`. Document this in the root README. |
-| Human to agent | Agent Protocol v1 (AI Engineer Foundation, REST/HTTP+JSON, `POST /ap/v1/agent/tasks`) | `@agent-protocols/agent-protocol` | Full parity with npm `agent-protocol` 1.0.5: server and client. Spec: https://github.com/AI-Engineer-Foundation/agent-protocol |
-| Agent to agent | A2A v1.0 (https://a2a-protocol.org) | `@agent-protocols/a2a` | Full parity with `@a2a-js/sdk` 1.3.0: client and server, all three bindings (JSON-RPC, gRPC, HTTP+JSON). |
-| Agent to UI | jam-flow presentation wire format | `@agent-protocols/presentation` | Port `/Users/marknorgate/Projects/jam-flow/packages/flow/src/presentation/` (V1 and T5 contracts) at jam-flow commit `4f8dafdfdc571fbd811b1685e329ae1d96e26b3e`, from Effect `4.0.0-rc.112` to `4.0.6`. Exclude `hosts/` and `terminal/`. |
+| Layer          | Protocol                                                                              | Package                           | Parity target                                                                                                                                                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent to tools | MCP                                                                                   | none                              | Reuse `effect/ai` `McpClient` and `McpServer` from `effect@4.0.6`. Document this in the root README.                                                                                                                                      |
+| Human to agent | Agent Protocol v1 (AI Engineer Foundation, REST/HTTP+JSON, `POST /ap/v1/agent/tasks`) | `@agent-protocols/agent-protocol` | Full parity with npm `agent-protocol` 1.0.5: server and client. Spec: https://github.com/AI-Engineer-Foundation/agent-protocol                                                                                                            |
+| Agent to agent | A2A v1.0 (https://a2a-protocol.org)                                                   | `@agent-protocols/a2a`            | Full parity with `@a2a-js/sdk` 1.3.0: client and server, all three bindings (JSON-RPC, gRPC, HTTP+JSON).                                                                                                                                  |
+| Agent to UI    | jam-flow presentation wire format                                                     | `@agent-protocols/presentation`   | Port `/Users/marknorgate/Projects/jam-flow/packages/flow/src/presentation/` (V1 and T5 contracts) at jam-flow commit `4f8dafdfdc571fbd811b1685e329ae1d96e26b3e`, from Effect `4.0.0-rc.112` to `4.0.6`. Exclude `hosts/` and `terminal/`. |
 
 The site https://agentprotocol.ai/ lists the first three protocols.
 

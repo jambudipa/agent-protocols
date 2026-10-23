@@ -1,11 +1,13 @@
 {
-  // The build project for this package: runtime source only, emitted to
-  // `dist/` with declarations. Tests are type-checked by the root tsconfig.
+  // The declaration build for this package: runtime source only. Vite emits
+  // the JavaScript; tsc emits declarations to `dist/`. Tests are type-checked
+  // by the root tsconfig.
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "declaration": true
+    "declaration": true,
+    "declarationMap": true
   },
   "include": ["src/**/*.ts"]
 }

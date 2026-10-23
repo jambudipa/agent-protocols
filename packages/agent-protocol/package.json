@@ -21,7 +21,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsc -p tsconfig.json",
+    "build": "vite build && tsc -p tsconfig.json --emitDeclarationOnly",
     "prepack": "npm run clean && npm run build"
   },
   "peerDependencies": {

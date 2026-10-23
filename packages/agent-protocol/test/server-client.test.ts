@@ -18,22 +18,21 @@ import { testServer } from "./support.js"
  * Counts the steps of each task, marks the third step as the last one, and
  * echoes whether the step had a body. A step with input "fail" fails.
  */
-const countingHandler: TaskHandler = (task) =>
-  Effect.gen(function*() {
-    const count = yield* Ref.make(0)
-    return (input) =>
-      Option.exists(Option.flatMap(input, (body) => body.input), (text) => text === "fail")
-        ? Effect.fail(new StepFailed({ message: `step of ${task.task_id} failed` }))
-        : Ref.updateAndGet(count, (n) => n + 1).pipe(
-          Effect.map((n) =>
-            new StepResult({
-              name: Option.some(`step ${n}`),
-              output: Option.some(Option.isSome(input) ? "with body" : "without body"),
-              is_last: n === 3
-            })
-          )
+const countingHandler: TaskHandler = Effect.fnUntraced(function*(task) {
+  const count = yield* Ref.make(0)
+  return (input) =>
+    Option.exists(Option.flatMap(input, (body) => body.input), (text) => text === "fail")
+      ? Effect.fail(new StepFailed({ message: `step of ${task.task_id} failed` }))
+      : Ref.updateAndGet(count, (n) => n + 1).pipe(
+        Effect.map((n) =>
+          new StepResult({
+            name: Option.some(`step ${n}`),
+            output: Option.some(Option.isSome(input) ? "with body" : "without body"),
+            is_last: n === 3
+          })
         )
-  })
+      )
+})
 
 const MessageBody = Schema.Struct({ message: Schema.String }).annotate({ identifier: "MessageBody" })
 
@@ -42,12 +41,11 @@ const emptyTask = { input: Option.none(), additional_input: Option.none() }
 const stepWith = (text: string) => ({ input: Option.some(text), additional_input: Option.none() })
 
 /** Sends a raw request and returns the status and the body text. */
-const send = (request: HttpClientRequest.HttpClientRequest) =>
-  Effect.gen(function*() {
-    const http = yield* HttpClient.HttpClient
-    const response = yield* http.execute(request)
-    return { status: response.status, body: yield* response.text }
-  })
+const send = Effect.fnUntraced(function*(request: HttpClientRequest.HttpClientRequest) {
+  const http = yield* HttpClient.HttpClient
+  const response = yield* http.execute(request)
+  return { status: response.status, body: yield* response.text }
+})
 
 const decodeJson = <S extends Schema.Top & { readonly DecodingServices: never }>(schema: S) =>
   Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.toCodecJson(schema)))
@@ -63,7 +61,8 @@ layer(testServer(countingHandler), { excludeTestServices: true })("server and cl
       assert.deepStrictEqual(task.additional_input, Option.some({ debug: false }))
       assert.deepStrictEqual(task.artifacts, [])
 
-      const runUntilLast = (done: ReadonlyArray<Step>): Effect.Effect<ReadonlyArray<Step>, unknown> =>
+      type ExecuteError = Effect.Error<ReturnType<typeof client.executeAgentTaskStep>>
+      const runUntilLast = (done: ReadonlyArray<Step>): Effect.Effect<ReadonlyArray<Step>, ExecuteError> =>
         client.executeAgentTaskStep({
           params: { task_id: task.task_id },
           payload: stepWith(`input ${done.length + 1}`)

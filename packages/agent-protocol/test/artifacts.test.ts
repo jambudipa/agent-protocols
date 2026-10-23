@@ -1,5 +1,5 @@
 import { assert, layer } from "@effect/vitest"
-import { Effect, FileSystem, Option, Path } from "effect"
+import { Effect, FileSystem, Option, Path, Schema } from "effect"
 import { HttpClient, HttpClientRequest } from "effect/http"
 import { AgentProtocolClient, ArtifactId, StepResult, TaskId } from "../src/index.js"
 import type { TaskHandler } from "../src/index.js"
@@ -8,6 +8,8 @@ import { TestWorkspace, testServer } from "./support.js"
 const echoHandler: TaskHandler = () => Effect.succeed(() => Effect.succeed(new StepResult({})))
 
 const emptyTask = { input: Option.none(), additional_input: Option.none() }
+
+const MessageBody = Schema.Struct({ message: Schema.String }).annotate({ identifier: "MessageBody" })
 
 // Every byte value, so that a text or encoding round trip would show.
 const content = Uint8Array.from({ length: 256 }, (_, index) => index)
@@ -92,7 +94,8 @@ layer(testServer(echoHandler), { excludeTestServices: true })("artifacts", (it) 
         )
       )
       assert.strictEqual(response.status, 422)
-      assert.isTrue(Object.hasOwn((yield* response.json) as object, "message"))
+      const body = yield* response.json.pipe(Effect.flatMap(Schema.decodeUnknownEffect(MessageBody)))
+      assert.isTrue(body.message.length > 0)
     }))
 
   it.effect("rejects a relative_path that leaves the workspace with 422", () =>

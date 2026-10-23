@@ -6,20 +6,33 @@
  * traffic.
  */
 import { assert, layer } from "@effect/vitest"
-import { Array as Arr, Effect, FileSystem, Option, Order, Path } from "effect"
+import { Array as Arr, Effect, FileSystem, Option, Order, Path, Schema } from "effect"
 import { HttpClient, HttpClientRequest } from "effect/http"
+import type { HttpMethod } from "effect/http"
 import { OpenApi } from "effect/http-api"
 import { AgentProtocolApi, StepResult } from "../src/index.js"
 import type { TaskHandler } from "../src/index.js"
 import { testServer } from "./support.js"
 
+/** The methods that the spec uses, as OpenAPI spells them. */
+const SpecMethod = Schema.Literals(["get", "post", "put", "patch", "delete"]).annotate({ identifier: "SpecMethod" })
+type SpecMethod = typeof SpecMethod.Type
+
+const httpMethod: { readonly [M in SpecMethod]: HttpMethod.HttpMethod } = {
+  get: "GET",
+  post: "POST",
+  put: "PUT",
+  patch: "PATCH",
+  delete: "DELETE"
+}
+
 interface Operation {
-  readonly method: string
+  readonly method: SpecMethod
   readonly path: string
   readonly operationId: string
 }
 
-const key = (operation: Operation) => `${operation.method.toUpperCase()} ${operation.path} ${operation.operationId}`
+const key = (operation: Operation) => `${httpMethod[operation.method]} ${operation.path} ${operation.operationId}`
 
 /**
  * Reads the operations of the vendored spec: each path at indent 2 under
@@ -33,33 +46,38 @@ const specOperations = Effect.gen(function*() {
   const lines = text.slice(text.indexOf("\npaths:\n"), text.indexOf("\ncomponents:\n")).split("\n")
   const capture = (pattern: RegExp, line: string) =>
     Option.flatMap(Option.fromNullishOr(pattern.exec(line)), (match) => Option.fromUndefinedOr(match[1]))
-  return lines.reduce<{ readonly path: string; readonly method: string; readonly operations: ReadonlyArray<Operation> }>(
+  const decodeMethod = Schema.decodeUnknownOption(SpecMethod)
+  return lines.reduce<{
+    readonly path: string
+    readonly method: Option.Option<SpecMethod>
+    readonly operations: ReadonlyArray<Operation>
+  }>(
     (state, line) =>
       Option.match(capture(/^ {2}'?(\/[^':]+)'?:$/, line), {
         onSome: (path) => ({ ...state, path }),
         onNone: () =>
-          Option.match(capture(/^ {4}(get|post|put|patch|delete):$/, line), {
-            onSome: (method) => ({ ...state, method }),
+          Option.match(Option.flatMap(capture(/^ {4}(\w+):$/, line), decodeMethod), {
+            onSome: (method) => ({ ...state, method: Option.some(method) }),
             onNone: () =>
-              Option.match(capture(/^ {6}operationId: (\w+)$/, line), {
-                onSome: (operationId) => ({
+              Option.match(Option.all([state.method, capture(/^ {6}operationId: (\w+)$/, line)]), {
+                onSome: ([method, operationId]) => ({
                   ...state,
-                  operations: [...state.operations, { method: state.method, path: state.path, operationId }]
+                  operations: [...state.operations, { method, path: state.path, operationId }]
                 }),
                 onNone: () => state
               })
           })
       }),
-    { path: "", method: "", operations: [] }
+    { path: "", method: Option.none(), operations: [] }
   ).operations
 })
 
 const generatedOperations = (): ReadonlyArray<Operation> =>
   Object.entries(OpenApi.fromApi(AgentProtocolApi).paths).flatMap(([path, item]) =>
-    Object.entries(item).flatMap(([method, operation]) =>
-      Option.match(Option.fromUndefinedOr((operation as { readonly operationId?: string }).operationId), {
+    SpecMethod.literals.flatMap((method) =>
+      Option.match(Option.fromUndefinedOr(item[method]), {
         onNone: () => [],
-        onSome: (operationId) => [{ method, path, operationId }]
+        onSome: (operation) => [{ method, path, operationId: operation.operationId }]
       })
     )
   )
@@ -74,7 +92,7 @@ const uploadForm = () => {
 
 /** A well-formed request for each operation, so that a miss can only be a route miss. */
 const requestFor = (operation: Operation, path: string): HttpClientRequest.HttpClientRequest => {
-  const request = HttpClientRequest.make(operation.method.toUpperCase() as "GET" | "POST")(path)
+  const request = HttpClientRequest.make(httpMethod[operation.method])(path)
   switch (operation.operationId) {
     case "createAgentTask":
     case "executeAgentTaskStep":

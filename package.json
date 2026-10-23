@@ -3,6 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "description": "Native Effect v4 implementations of the agent protocols.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jambudipa/agent-protocols.git"
+  },
+  "homepage": "https://github.com/jambudipa/agent-protocols#readme",
+  "bugs": {
+    "url": "https://github.com/jambudipa/agent-protocols/issues"
+  },
   "type": "module",
   "engines": {
     "node": ">=24"

@@ -203,14 +203,16 @@ export const serverUrl = Effect.map(HttpServer.HttpServer, (server) =>
 export const testServer = (
   options: {
     readonly card?: (baseUrl: string) => AgentCard;
-    readonly handler?: Omit<DefaultRequestHandlerOptions, 'agentCard'>;
+    readonly handler?: (
+      baseUrl: string
+    ) => Omit<DefaultRequestHandlerOptions, 'agentCard'>;
     readonly routes?: A2AHttpRoutesOptions;
   } = {}
 ) => {
   const handler = Layer.unwrap(
     Effect.map(serverUrl, (baseUrl) =>
       DefaultRequestHandler.layer({
-        ...options.handler,
+        ...options.handler?.(baseUrl),
         agentCard: (options.card ?? echoCard)(baseUrl),
       })
     )

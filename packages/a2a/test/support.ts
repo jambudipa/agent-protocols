@@ -12,10 +12,14 @@ import {
   AgentExecutionError,
   AgentExecutor,
   DefaultRequestHandler,
+  ServerCallContext,
   type DefaultRequestHandlerOptions,
   InMemoryTaskStore,
   type A2AHttpRoutesOptions,
 } from '../src/server/index.js';
+
+/** The extension that the echo card declares and the echo agent activates. */
+export const TEST_EXTENSION = 'urn:a2a:test-extension';
 
 /** The current time as an RFC 3339 timestamp. */
 export const now = Effect.map(DateTime.now, DateTime.formatIso);
@@ -34,6 +38,8 @@ export const textOf = (message: Message): string =>
  * - `input`: stops in INPUT_REQUIRED;
  * - `auth`: stops in AUTH_REQUIRED, then completes;
  * - `wait`: works until canceled;
+ * - `bad-order`: publishes a second task event, which breaks the stream;
+ * - `extension`: activates {@link TEST_EXTENSION}, then completes;
  * - anything else: a task that works, adds an artifact and completes.
  */
 export const EchoExecutor = Layer.succeed(
@@ -112,6 +118,21 @@ export const EchoExecutor = Layer.succeed(
           return yield* status('TASK_STATE_COMPLETED', 'done after auth');
         }
         if (text === 'wait') return yield* Effect.never;
+        if (text === 'bad-order') {
+          return yield* bus.publish(
+            AgentEvent.task({
+              id: taskId,
+              contextId,
+              status: { state: 'TASK_STATE_WORKING', timestamp },
+            })
+          );
+        }
+        if (text === 'extension') {
+          yield* ServerCallContext.activateExtension(
+            context.context,
+            TEST_EXTENSION
+          );
+        }
         yield* bus.publish(
           AgentEvent.artifactUpdate({
             taskId,
@@ -158,6 +179,7 @@ export const echoCard = (
     streaming: true,
     pushNotifications: true,
     extendedAgentCard: true,
+    extensions: [{ uri: TEST_EXTENSION, description: 'A test extension.' }],
   },
   defaultInputModes: ['text/plain'],
   defaultOutputModes: ['text/plain'],

@@ -16,6 +16,11 @@ const entries = {
   'client/grpc/index': entry('client/grpc/index.ts'),
   'server/sql/index': entry('server/sql/index.ts'),
   'bin/a2a-db': entry('bin/a2a-db.ts'),
+  'compat/v0_3/index': entry('compat/v0_3/index.ts'),
+  'compat/v0_3/server/index': entry('compat/v0_3/server/index.ts'),
+  'compat/v0_3/server/grpc/index': entry('compat/v0_3/server/grpc/index.ts'),
+  'compat/v0_3/client/index': entry('compat/v0_3/client/index.ts'),
+  'compat/v0_3/client/grpc/index': entry('compat/v0_3/client/grpc/index.ts'),
 };
 
 export default defineConfig({

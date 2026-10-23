@@ -9,7 +9,7 @@ import {
   verifyAgentCardSignature as refVerify,
 } from '@a2a-js/sdk';
 import { assert, it } from '@effect/vitest';
-import { Effect, Schema } from 'effect';
+import { Data, Effect, Schema } from 'effect';
 import { generateKeyPair } from 'jose';
 import {
   AgentCard,
@@ -45,10 +45,24 @@ const card: AgentCard = {
   },
 };
 
-const keys = Effect.tryPromise({
-  try: () => generateKeyPair('ES256'),
-  catch: (cause) => cause,
-});
+/** A failure of the reference SDK or of jose, at the Promise boundary. */
+class BoundaryError extends Data.TaggedError('BoundaryError')<{
+  readonly cause: unknown;
+}> {}
+
+const boundary = <A>(evaluate: () => Promise<A>) =>
+  Effect.tryPromise({
+    try: evaluate,
+    catch: (cause) => new BoundaryError({ cause }),
+  });
+
+const keys = boundary(() => generateKeyPair('ES256'));
+
+/** A key provider for the reference verifier. */
+const provide =
+  <K>(key: K) =>
+  () =>
+    Effect.runPromise(Effect.succeed(key));
 
 it.effect('canonicalizes a card to the bytes of the reference', () =>
   Effect.sync(() => {
@@ -64,24 +78,12 @@ it.effect('signs a card that the reference verifies', () =>
     const { privateKey, publicKey } = yield* keys;
     const signed = yield* generateAgentCardSignature(privateKey, header)(card);
     assert.strictEqual(signed.signatures?.length, 1);
-    yield* Effect.tryPromise({
-      try: () =>
-        refVerify(() => Effect.runPromise(Effect.succeed(publicKey)))(
-          toReference(signed)
-        ),
-      catch: (cause) => cause,
-    });
+    yield* boundary(() => refVerify(provide(publicKey))(toReference(signed)));
     const tampered = toReference({ ...signed, description: 'Changed.' });
     const failure = yield* Effect.flip(
-      Effect.tryPromise({
-        try: () =>
-          refVerify(() => Effect.runPromise(Effect.succeed(publicKey)))(
-            tampered
-          ),
-        catch: (cause) => cause,
-      })
+      boundary(() => refVerify(provide(publicKey))(tampered))
     );
-    assert.ok(failure instanceof Error);
+    assert.ok(failure.cause instanceof Error);
   })
 );
 
@@ -89,10 +91,7 @@ it.effect('verifies a card that the reference signs', () =>
   Effect.gen(function* () {
     const { privateKey, publicKey } = yield* keys;
     const signed = fromReference(
-      yield* Effect.tryPromise({
-        try: () => refSign(privateKey, header)(toReference(card)),
-        catch: (cause) => cause,
-      })
+      yield* boundary(() => refSign(privateKey, header)(toReference(card)))
     );
     const verify = verifyAgentCardSignature(() => Effect.succeed(publicKey));
     yield* verify(signed);

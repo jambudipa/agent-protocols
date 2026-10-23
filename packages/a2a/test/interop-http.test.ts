@@ -22,7 +22,7 @@ import {
   ClientFactoryOptions as RefClientFactoryOptions,
 } from '@a2a-js/sdk/client';
 import { assert, layer } from '@effect/vitest';
-import { Effect, Layer, Predicate, Stream } from 'effect';
+import { Data, Effect, Layer, Predicate, Stream } from 'effect';
 import { FetchHttpClient } from 'effect/http';
 import { ClientFactory, type Client } from '../src/client/index.js';
 import type {
@@ -44,25 +44,35 @@ const refJson = (text: string) => ({
   parts: [{ text }],
 });
 
+/** A failure of the reference SDK, at the Promise boundary. */
+class ReferenceError extends Data.TaggedError('ReferenceError')<{
+  readonly cause: unknown;
+}> {}
+
 const promise = <A>(evaluate: () => Promise<A>) =>
-  Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
+  Effect.tryPromise({
+    try: evaluate,
+    catch: (cause) => new ReferenceError({ cause }),
+  });
 
 const collect = <A>(
   iterable: AsyncIterable<A>,
   limit = Number.POSITIVE_INFINITY
 ) =>
-  Stream.fromAsyncIterable(iterable, (cause) => cause).pipe(
-    Stream.take(limit),
-    Stream.runCollect
-  );
+  Stream.fromAsyncIterable(
+    iterable,
+    (cause) => new ReferenceError({ cause })
+  ).pipe(Stream.take(limit), Stream.runCollect);
 
 const refTaskOf = (result: unknown) => {
   assert.ok(Predicate.hasProperty(result, 'status'), 'expected a task');
   return RefTask.toJSON(result as RefTask) as Record<string, unknown>;
 };
 
-const errorName = (error: unknown) =>
-  Predicate.hasProperty(error, 'name') ? error.name : String(error);
+const errorName = (error: ReferenceError) =>
+  Predicate.hasProperty(error.cause, 'name')
+    ? error.cause.name
+    : String(error.cause);
 
 /** The reference client of one binding, against our server. */
 const referenceClient = (binding: (typeof BINDINGS)[number], url: string) =>

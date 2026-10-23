@@ -26,21 +26,20 @@ import { StepResult, type TaskHandler } from "@agent-protocols/agent-protocol"
 import * as AgentProtocolNode from "@agent-protocols/agent-protocol/node"
 
 // Runs once for each new task, and returns the step handler of that task.
-const taskHandler: TaskHandler = (task) =>
-  Effect.gen(function*() {
-    const steps = yield* Ref.make(0)
-    // Runs once for each step. `input` is `Option.none()` for a step without a body.
-    return (input) =>
-      Ref.updateAndGet(steps, (n) => n + 1).pipe(
-        Effect.map((n) =>
-          new StepResult({
-            name: Option.some(`step ${n}`),
-            output: Option.some(`task ${task.task_id}, step ${n}`),
-            is_last: n === 3
-          })
-        )
+const taskHandler: TaskHandler = Effect.fnUntraced(function*(task) {
+  const steps = yield* Ref.make(0)
+  // Runs once for each step. `input` is `Option.none()` for a step without a body.
+  return (input) =>
+    Ref.updateAndGet(steps, (n) => n + 1).pipe(
+      Effect.map((n) =>
+        new StepResult({
+          name: Option.some(`step ${n}`),
+          output: Option.some(`task ${task.task_id}, step ${n}`),
+          is_last: n === 3
+        })
       )
-  })
+    )
+})
 
 Layer.launch(AgentProtocolNode.layer(taskHandler, { port: 8000, workspace: "./workspace" })).pipe(
   NodeRuntime.runMain
@@ -71,7 +70,7 @@ type StepHandler = (input: Option.Option<StepRequestBody>) => Effect.Effect<Step
 
 ```ts
 import { FetchHttpClient } from "effect/http"
-import { Effect, Option } from "effect"
+import { Effect, Layer, Option } from "effect"
 import { AgentProtocolClient } from "@agent-protocols/agent-protocol"
 
 const program = Effect.gen(function*() {
@@ -85,8 +84,9 @@ const program = Effect.gen(function*() {
   })
   return step.output
 }).pipe(
-  Effect.provide(AgentProtocolClient.layer({ baseUrl: "http://localhost:8000" })),
-  Effect.provide(FetchHttpClient.layer)
+  Effect.provide(
+    AgentProtocolClient.layer({ baseUrl: "http://localhost:8000" }).pipe(Layer.provide(FetchHttpClient.layer))
+  )
 )
 ```
 

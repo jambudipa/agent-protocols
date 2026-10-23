@@ -18,6 +18,7 @@ export default [
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
+      '**/coverage/**',
       'eslint/**',
       '_bmad/**',
       '_bmad-output/**',

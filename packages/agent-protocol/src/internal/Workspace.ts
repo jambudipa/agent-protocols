@@ -33,7 +33,9 @@ export const makeWorkspace = Effect.fnUntraced(function*(
     const taskDirectory = path.join(workspace, taskId)
     const file = path.join(taskDirectory, Option.getOrElse(artifact.relative_path, () => ""), artifact.file_name)
     const relative = path.relative(taskDirectory, file)
-    return relative === "" || relative.startsWith("..") || path.isAbsolute(relative)
+    // A name such as `..env` stays inside; only a `..` segment leaves.
+    const leaves = relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)
+    return relative === "" || leaves
       ? Option.none()
       : Option.some(file)
   }

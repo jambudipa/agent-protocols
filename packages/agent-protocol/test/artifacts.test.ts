@@ -66,6 +66,21 @@ layer(testServer(echoHandler), { excludeTestServices: true })("artifacts", (it) 
       assert.deepStrictEqual(new Uint8Array(downloaded), content)
     }))
 
+  it.effect("keeps a file name that starts with two dots inside the task directory", () =>
+    Effect.gen(function*() {
+      const client = yield* AgentProtocolClient
+      const task = yield* client.createAgentTask({ payload: emptyTask })
+      const artifact = yield* client.uploadAgentTaskArtifacts({
+        params: { task_id: task.task_id },
+        payload: form({ file: { name: "..env", bytes: content }, relativePath: "..cache/data" })
+      })
+      assert.strictEqual(artifact.file_name, "..env")
+      const downloaded = yield* client.downloadAgentTaskArtifact({
+        params: { task_id: task.task_id, artifact_id: artifact.artifact_id }
+      })
+      assert.deepStrictEqual(new Uint8Array(downloaded), content)
+    }))
+
   it.effect("rejects an upload without a file part with 422", () =>
     Effect.gen(function*() {
       const client = yield* AgentProtocolClient

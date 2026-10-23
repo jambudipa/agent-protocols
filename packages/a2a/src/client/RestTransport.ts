@@ -129,8 +129,10 @@ export const makeRestTransport = (options: RestTransportOptions): Transport => {
         PROTOCOL
       );
       if (!isOk(response.status)) {
-        return yield* Effect.fail(
-          fromRestErrorResponse(response.status, response.text, path)
+        return yield* fromRestErrorResponse(
+          response.status,
+          response.text,
+          path
         );
       }
       if (response.status === 204 || response.text.trim() === '') return {};
@@ -161,9 +163,7 @@ export const makeRestTransport = (options: RestTransportOptions): Transport => {
           const text = yield* response.text.pipe(
             Effect.orElseSucceed(() => '')
           );
-          return yield* Effect.fail(
-            fromRestErrorResponse(response.status, text, path)
-          );
+          return yield* fromRestErrorResponse(response.status, text, path);
         }
         const contentType = response.headers['content-type'] ?? '';
         if (!contentType.startsWith('text/event-stream')) {
@@ -188,14 +188,12 @@ export const makeRestTransport = (options: RestTransportOptions): Transport => {
                   'SSE event data'
                 );
                 if (event.type === 'error') {
-                  return yield* Effect.fail(
-                    Option.isSome(decodeErrorBody(data))
-                      ? fromRestErrorResponse(response.status, event.data, path)
-                      : transportError(
-                          PROTOCOL,
-                          `SSE error event: ${event.data}`
-                        )
-                  );
+                  return yield* Option.isSome(decodeErrorBody(data))
+                    ? fromRestErrorResponse(response.status, event.data, path)
+                    : transportError(
+                        PROTOCOL,
+                        `SSE error event: ${event.data}`
+                      );
                 }
                 return yield* decodeResponse(StreamResponse, PROTOCOL)(data);
               })

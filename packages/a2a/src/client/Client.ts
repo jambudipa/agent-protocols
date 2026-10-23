@@ -274,7 +274,7 @@ export const makeClient = (
           return yield* outputOf(method, after.result);
         }
         if (before.args.input.method !== method) {
-          return yield* Effect.fail(mismatch(method));
+          return yield* mismatch(method);
         }
         const output = yield* call(
           before.args.input.value as Input<M>,
@@ -320,7 +320,7 @@ export const makeClient = (
             );
           }
           if (before.args.input.method !== method) {
-            return yield* Effect.fail(mismatch(method));
+            return yield* mismatch(method);
           }
           const stopped = yield* Ref.make(false);
           return call(

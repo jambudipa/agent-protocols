@@ -173,7 +173,7 @@ export const makeJsonRpcTransport = (
           )
         );
         if (isObject(body) && 'jsonrpc' in body && 'error' in body) {
-          return yield* Effect.fail(fromJsonRpcErrorResponse(body['error']));
+          return yield* fromJsonRpcErrorResponse(body['error']);
         }
         return yield* transportError(
           PROTOCOL,
@@ -186,7 +186,7 @@ export const makeJsonRpcTransport = (
         method
       );
       if ('error' in envelope) {
-        return yield* Effect.fail(fromJsonRpcErrorResponse(envelope['error']));
+        return yield* fromJsonRpcErrorResponse(envelope['error']);
       }
       if (envelope['id'] !== id) {
         return yield* transportError(
@@ -250,9 +250,7 @@ export const makeJsonRpcTransport = (
               isObject(parsed.value) &&
               'error' in parsed.value
             ) {
-              return yield* Effect.fail(
-                fromJsonRpcErrorResponse(parsed.value['error'])
-              );
+              return yield* fromJsonRpcErrorResponse(parsed.value['error']);
             }
             return yield* transportError(
               PROTOCOL,
@@ -283,9 +281,7 @@ export const makeJsonRpcTransport = (
                     );
                   }
                   if ('error' in envelope) {
-                    return yield* Effect.fail(
-                      fromJsonRpcErrorResponse(envelope['error'])
-                    );
+                    return yield* fromJsonRpcErrorResponse(envelope['error']);
                   }
                   if (!('result' in envelope)) {
                     return yield* transportError(

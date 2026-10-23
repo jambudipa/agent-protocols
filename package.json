@@ -22,9 +22,11 @@
     "lint:effect": "effect-language-service diagnostics --project tsconfig.json --format text --severity ${EFFECT_SEVERITY:-error,warning} --strict",
     "lint:effect:all": "EFFECT_SEVERITY=error,warning,message npm run lint:effect",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "version": "changeset version"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "@effect/language-service": "^0.87.5",
     "@effect/vitest": "~4.0.6",
     "@types/node": "^24.0.0",

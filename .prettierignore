@@ -6,3 +6,4 @@ _bmad-output/
 eslint/effect-rules.mjs
 eslint/effect-eslint-config.mjs
 packages/*/spec/
+packages/a2a/src/generated/

@@ -29,6 +29,12 @@ export default [
   },
 
   {
+    // protobuf-es output of `npm run generate -w @jambudipa/a2a`. It is never
+    // edited by hand, and `git diff` after a regeneration proves it is current.
+    ignores: ['packages/a2a/src/generated/**'],
+  },
+
+  {
     // No inline disables: an exception belongs in scoped configuration here.
     linterOptions: {
       noInlineConfig: true,

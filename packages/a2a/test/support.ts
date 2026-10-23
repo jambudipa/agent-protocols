@@ -4,7 +4,7 @@
  */
 import { NodeCrypto, NodeHttpServer } from '@effect/platform-node';
 import { DateTime, Effect, Layer, Option } from 'effect';
-import { HttpRouter, HttpServer } from 'effect/http';
+import { FetchHttpClient, HttpRouter, HttpServer } from 'effect/http';
 import type { AgentCard, Message, Part } from '../src/index.js';
 import {
   A2AHttpRoutes,
@@ -218,7 +218,8 @@ export const testServer = (
   return HttpRouter.serve(A2AHttpRoutes.layer(options.routes), {
     disableLogger: true,
   }).pipe(
-    Layer.provide(handler),
+    // The push sender needs a client without the test URL prefix.
+    Layer.provide(Layer.provide(handler, FetchHttpClient.layer)),
     Layer.provide(Layer.fresh(InMemoryTaskStore.layer)),
     Layer.provide(EchoExecutor),
     Layer.provideMerge(NodeHttpServer.layerTest),

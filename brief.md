@@ -1,0 +1,1 @@
+There are four agent protocols: MCP, agent to agent, human to agent (maybe), and agent to UI. Please search for them and make native, installable effect v4 versions of them. Copy the canonical linting rules from ~/.agents.

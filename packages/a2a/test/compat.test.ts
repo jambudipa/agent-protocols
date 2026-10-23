@@ -3,7 +3,7 @@
  * JSON-RPC and HTTP+JSON bindings of our server, and its version gate.
  */
 import { assert, describe, it, layer } from '@effect/vitest';
-import { Effect, Schema } from 'effect';
+import { Effect, Option, Schema } from 'effect';
 import { HttpClient, HttpClientRequest } from 'effect/http';
 import {
   Proto,
@@ -15,7 +15,10 @@ import {
   toCompatAgentCard,
   toCoreAgentCard,
 } from '../src/compat/v0_3/index.js';
-import { legacyCompat } from '../src/compat/v0_3/server/index.js';
+import {
+  V03PushNotificationSerializer,
+  legacyCompat,
+} from '../src/compat/v0_3/server/index.js';
 import type { Part } from '../src/index.js';
 import { at, json, sse } from './http.js';
 import { legacyCard } from './compat-support.js';
@@ -119,6 +122,37 @@ describe('translators', () => {
           status: { state: 'TASK_STATE_WORKING' },
         },
       });
+    })
+  );
+});
+
+describe('push notifications', () => {
+  it.effect('serializes v0.3 bodies: the whole task when it is known', () =>
+    Effect.gen(function* () {
+      const update = {
+        statusUpdate: {
+          taskId: 't',
+          contextId: 'c',
+          status: { state: 'TASK_STATE_WORKING' as const },
+        },
+      };
+      const bare = yield* V03PushNotificationSerializer(update, Option.none());
+      assert.strictEqual(bare.contentType, 'application/json');
+      assert.strictEqual(
+        at(json({ status: 200, headers: {}, text: bare.body }), 'kind'),
+        'status-update'
+      );
+      const withTask = yield* V03PushNotificationSerializer(
+        update,
+        Option.some({
+          id: 't',
+          contextId: 'c',
+          status: { state: 'TASK_STATE_WORKING' },
+        })
+      );
+      const body = json({ status: 200, headers: {}, text: withTask.body });
+      assert.strictEqual(at(body, 'kind'), 'task');
+      assert.strictEqual(at(body, 'status', 'state'), 'working');
     })
   );
 });

@@ -1,0 +1,159 @@
+{
+  "name": "@jambudipa/a2a",
+  "version": "0.1.0",
+  "description": "A2A v1.0 server and client for Effect v4, over JSON-RPC, gRPC and HTTP+JSON.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jambudipa/agent-protocols.git",
+    "directory": "packages/a2a"
+  },
+  "homepage": "https://github.com/jambudipa/agent-protocols/tree/master/packages/a2a#readme",
+  "bugs": {
+    "url": "https://github.com/jambudipa/agent-protocols/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "a2a-db": "./dist/bin/a2a-db.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./errors": {
+      "types": "./dist/errors/index.d.ts",
+      "import": "./dist/errors/index.js",
+      "default": "./dist/errors/index.js"
+    },
+    "./errors/grpc": {
+      "types": "./dist/errors/grpc/index.d.ts",
+      "import": "./dist/errors/grpc/index.js",
+      "default": "./dist/errors/grpc/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    },
+    "./server/grpc": {
+      "types": "./dist/server/grpc/index.d.ts",
+      "import": "./dist/server/grpc/index.js",
+      "default": "./dist/server/grpc/index.js"
+    },
+    "./server/sql": {
+      "types": "./dist/server/sql/index.d.ts",
+      "import": "./dist/server/sql/index.js",
+      "default": "./dist/server/sql/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js",
+      "default": "./dist/client/index.js"
+    },
+    "./client/grpc": {
+      "types": "./dist/client/grpc/index.d.ts",
+      "import": "./dist/client/grpc/index.js",
+      "default": "./dist/client/grpc/index.js"
+    },
+    "./compat/v0_3": {
+      "types": "./dist/compat/v0_3/index.d.ts",
+      "import": "./dist/compat/v0_3/index.js",
+      "default": "./dist/compat/v0_3/index.js"
+    },
+    "./compat/v0_3/server": {
+      "types": "./dist/compat/v0_3/server/index.d.ts",
+      "import": "./dist/compat/v0_3/server/index.js",
+      "default": "./dist/compat/v0_3/server/index.js"
+    },
+    "./compat/v0_3/server/grpc": {
+      "types": "./dist/compat/v0_3/server/grpc/index.d.ts",
+      "import": "./dist/compat/v0_3/server/grpc/index.js",
+      "default": "./dist/compat/v0_3/server/grpc/index.js"
+    },
+    "./compat/v0_3/client": {
+      "types": "./dist/compat/v0_3/client/index.d.ts",
+      "import": "./dist/compat/v0_3/client/index.js",
+      "default": "./dist/compat/v0_3/client/index.js"
+    },
+    "./compat/v0_3/client/grpc": {
+      "types": "./dist/compat/v0_3/client/grpc/index.d.ts",
+      "import": "./dist/compat/v0_3/client/grpc/index.js",
+      "default": "./dist/compat/v0_3/client/grpc/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js",
+      "default": "./dist/node.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.json --emitDeclarationOnly",
+    "dev": "vite build --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "generate": "buf generate",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm run typecheck",
+    "prepack": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "jose": "^6.2.13"
+  },
+  "peerDependencies": {
+    "@bufbuild/protobuf": "^2.16.0",
+    "@effect/platform-node": "~4.0.6",
+    "@effect/sql-mysql2": "~4.0.6",
+    "@effect/sql-pg": "~4.0.6",
+    "@effect/sql-sqlite-node": "~4.0.6",
+    "@grpc/grpc-js": "^1.14.6",
+    "effect": "~4.0.6"
+  },
+  "peerDependenciesMeta": {
+    "@bufbuild/protobuf": {
+      "optional": true
+    },
+    "@effect/sql-mysql2": {
+      "optional": true
+    },
+    "@effect/sql-pg": {
+      "optional": true
+    },
+    "@effect/sql-sqlite-node": {
+      "optional": true
+    },
+    "@grpc/grpc-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@a2a-js/sdk": "1.3.0",
+    "@bufbuild/buf": "1.74.0",
+    "@bufbuild/protobuf": "^2.16.0",
+    "@bufbuild/protoc-gen-es": "2.16.0",
+    "@effect/platform-node": "~4.0.6",
+    "@effect/sql-mysql2": "~4.0.6",
+    "@effect/sql-pg": "~4.0.6",
+    "@effect/sql-sqlite-node": "~4.0.6",
+    "@grpc/grpc-js": "^1.14.6",
+    "@types/express": "^5.0.6",
+    "effect": "~4.0.6",
+    "express": "^5.3.0"
+  }
+}

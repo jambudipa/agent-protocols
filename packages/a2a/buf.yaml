@@ -1,0 +1,7 @@
+# The vendored protobuf definitions under spec/proto: the A2A v1.0 and v0.3
+# services and the googleapis files they import. No remote module is used, so
+# `npm run generate` works offline and gives the same output every time. buf
+# supplies the google/protobuf well-known types itself.
+version: v2
+modules:
+  - path: spec/proto

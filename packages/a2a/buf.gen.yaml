@@ -1,0 +1,14 @@
+# `npm run generate` writes the protobuf-es code for every vendored proto to
+# src/generated. The plugin is the local protoc-gen-es from devDependencies,
+# never a remote plugin, and `clean` removes stale output first.
+version: v2
+clean: true
+plugins:
+  - local: protoc-gen-es
+    out: src/generated
+    include_imports: false
+    opt:
+      - target=ts
+      - import_extension=js
+inputs:
+  - directory: spec/proto

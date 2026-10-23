@@ -5,24 +5,40 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
-  "files": [
-    "dist"
-  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./node": {
       "types": "./dist/node.d.ts",
+      "import": "./dist/node.js",
       "default": "./dist/node.js"
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "clean": "rm -rf dist",
     "build": "vite build && tsc -p tsconfig.json --emitDeclarationOnly",
-    "prepack": "npm run clean && npm run build"
+    "dev": "vite build --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm run typecheck",
+    "prepack": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "peerDependencies": {
     "@effect/platform-node": "~4.0.6",

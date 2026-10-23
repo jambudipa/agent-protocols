@@ -9,21 +9,21 @@ Compare current code to the last tag and recommend a semver bump.
 
 ## Procedure
 
-1. Find the last tag:
+This repository is an npm workspace. The root `package.json` is private and never published. Run the analysis once for each package under `packages/`, and give one result for each package.
+
+1. Find the last tag of the package. Tags use the Changesets format `@scope/name@x.y.z`, and `git describe` misses them:
    ```bash
-   git describe --tags --abbrev=0
-   ```
-   If the project uses Changesets-style tags (`@scope/name@x.y.z`), fall back to:
-   ```bash
-   PKG_NAME=$(node -p "require('./package.json').name")
-   git tag --sort=-version:refname | grep "^${PKG_NAME}@" | head -n1
+   PKG_DIR=packages/<dir>
+   PKG_NAME=$(node -p "require('./${PKG_DIR}/package.json').name")
+   git tag --list "${PKG_NAME}@*" --sort=-version:refname | head -n1
    ```
 
-2. Generate the diff:
+2. Generate the diff of the package, plus the shared compiler options that change its emitted declarations:
    ```bash
-   git diff <last-tag> HEAD
-   git log <last-tag>..HEAD --oneline
+   git diff <last-tag> HEAD -- "$PKG_DIR" tsconfig.base.json
+   git log <last-tag>..HEAD --oneline -- "$PKG_DIR" tsconfig.base.json
    ```
+   The public API is what the `exports` map of the package reaches.
 
 3. Categorize each change.
 
@@ -38,6 +38,7 @@ Compare current code to the last tag and recommend a semver bump.
 - Removal of previously deprecated features.
 - Behaviour change that would break a reasonable caller's assumptions.
 - Minimum runtime/Node version raised.
+- Peer dependency range raised (for example `effect`).
 
 ### MINOR — backward-compatible additions
 
@@ -58,7 +59,7 @@ Compare current code to the last tag and recommend a semver bump.
 ## Edge cases
 
 - **Pre-1.0 (`0.x.y`)**: by strict semver, minor can be breaking. But for predictable downstream behaviour, treat breaking changes as MINOR (`0.x → 0.x+1`) and additions as PATCH (`0.x.y → 0.x.y+1`). Flag this so the user can decide.
-- **Untagged repo**: no last tag → recommend starting at `0.1.0` and explain.
+- **Untagged package**: no tag for the package and `npm view <name> version` gives E404 → recommend the first release at the current `package.json` version, with no bump and no changeset, and explain.
 - **Multiple changes mixing categories**: the highest category wins (any breaking → MAJOR).
 
 ## Output template

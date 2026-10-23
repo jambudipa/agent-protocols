@@ -299,6 +299,15 @@ export const ProtoListTaskPushNotificationConfigResponse = Schema.Struct({
 }).annotate({ identifier: 'V03ProtoListTaskPushNotificationConfigResponse' });
 
 /**
+ * The empty message, `google.protobuf.Empty` and `GetAgentCardRequest`.
+ *
+ * @since 0.1.0
+ */
+export const ProtoEmpty = Schema.Struct({}).annotate({
+  identifier: 'V03ProtoEmpty',
+});
+
+/**
  * A request that names a task or a config.
  *
  * @since 0.1.0

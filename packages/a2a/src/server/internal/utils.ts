@@ -4,7 +4,7 @@
  *
  * @internal
  */
-import { Effect, Result } from 'effect';
+import { Effect, Result, Struct } from 'effect';
 import { Base64 } from 'effect/encoding';
 import { RequestMalformedError } from '../../errors/index.js';
 import type {
@@ -57,14 +57,15 @@ export const isMessage = (result: SendMessageResult): result is Message =>
 export const applyHistoryLength = (
   task: Task,
   historyLength: number | undefined
-): Task =>
-  historyLength === undefined
-    ? task
-    : {
-        ...task,
-        history:
-          historyLength <= 0 ? [] : (task.history ?? []).slice(-historyLength),
-      };
+): Task => {
+  if (historyLength === undefined) return task;
+  // An empty history is left out of the wire form, as the reference does.
+  const history =
+    historyLength <= 0 ? [] : (task.history ?? []).slice(-historyLength);
+  return history.length === 0
+    ? Struct.omit(task, ['history'])
+    : { ...task, history };
+};
 
 /**
  * Encodes the cursor of a task list page: the status timestamp and the id of

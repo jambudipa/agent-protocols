@@ -11,3 +11,4 @@ export * from './Types.js';
 export * from './Constants.js';
 export * as Extensions from './Extensions.js';
 export * from './Sse.js';
+export * from './Signature.js';

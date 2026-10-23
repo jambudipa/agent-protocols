@@ -11,6 +11,9 @@ const entries = {
   'server/index': entry('server/index.ts'),
   'client/index': entry('client/index.ts'),
   node: entry('node.ts'),
+  'errors/grpc/index': entry('errors/grpc/index.ts'),
+  'server/grpc/index': entry('server/grpc/index.ts'),
+  'client/grpc/index': entry('client/grpc/index.ts'),
 };
 
 export default defineConfig({

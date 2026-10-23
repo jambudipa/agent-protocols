@@ -1,14 +1,31 @@
 {
   "name": "agent-protocols",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Native Effect v4 implementations of the agent protocols.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc"
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "npm run lint:eslint; e=$?; npm run lint:effect; f=$?; exit $(( e > f ? e : f ))",
+    "lint:eslint": "eslint . --max-warnings=0",
+    "lint:effect": "effect-language-service diagnostics --project tsconfig.json --format text --severity ${EFFECT_SEVERITY:-error,warning} --strict",
+    "lint:effect:all": "EFFECT_SEVERITY=error,warning,message npm run lint:effect"
   },
-  "dependencies": {},
   "devDependencies": {
-    "typescript": "^6.0.3"
-  },
-  "private": true
+    "@effect/language-service": "^0.87.5",
+    "@effect/vitest": "~4.0.6",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.13.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  }
 }

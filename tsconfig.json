@@ -1,12 +1,10 @@
 {
+  // The development project: every package's source and tests. `typecheck` and
+  // the Effect language service gate (`lint:effect`) both read this file, so a
+  // test file gets the same type-aware checks as runtime source.
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "outDir": "dist"
+    "noEmit": true
   },
-  "include": ["src"]
+  "include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts"]
 }

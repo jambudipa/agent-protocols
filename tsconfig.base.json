@@ -1,0 +1,26 @@
+{
+  // Shared compiler options for every package in the workspace. A package
+  // tsconfig extends this file and adds only its own layout and emit settings.
+  "compilerOptions": {
+    // The Effect language service. `tsc` ignores this field; the editor reads
+    // it, and `npm run lint:effect` runs the same plugin from the command line.
+    // No `diagnosticSeverity` map: the shipped defaults are the standard.
+    "plugins": [{ "name": "@effect/language-service" }],
+
+    "target": "es2022",
+    "lib": ["es2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "moduleDetection": "force",
+    "types": ["node"],
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true
+  }
+}

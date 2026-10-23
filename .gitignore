@@ -1,16 +1,21 @@
 /tmp
-/out-tsc
 
 node_modules/
 dist/
+coverage/
 *.tgz
+*.tsbuildinfo
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-/.pnp
-.pnp.js
 
+.changeset-status.txt
+.npm-pack-preview.json
+
+.env
+.env.*
+
+.DS_Store
 .vscode/*
 
+/.claude/worktrees/
 /_bmad/render/
 /.serena/

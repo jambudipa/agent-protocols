@@ -14,6 +14,8 @@ const entries = {
   'errors/grpc/index': entry('errors/grpc/index.ts'),
   'server/grpc/index': entry('server/grpc/index.ts'),
   'client/grpc/index': entry('client/grpc/index.ts'),
+  'server/sql/index': entry('server/sql/index.ts'),
+  'bin/a2a-db': entry('bin/a2a-db.ts'),
 };
 
 export default defineConfig({

@@ -49,4 +49,11 @@ export default [
   })),
 
   effectLintConfig(SOURCES),
+
+  {
+    // gRPC boundary (@jambudipa/a2a): the @grpc/grpc-js unary callback reads
+    // a `null` error as success, so this one adapter file writes `null`.
+    files: ['packages/a2a/src/server/grpc/internal/callbacks.ts'],
+    rules: { 'effect/no-null-use-option': 'off' },
+  },
 ];

@@ -45,14 +45,14 @@ const refJson = (text: string) => ({
 });
 
 /** A failure of the reference SDK, at the Promise boundary. */
-class ReferenceError extends Data.TaggedError('ReferenceError')<{
+class ReferenceSdkError extends Data.TaggedError('ReferenceSdkError')<{
   readonly cause: unknown;
 }> {}
 
 const promise = <A>(evaluate: () => Promise<A>) =>
   Effect.tryPromise({
     try: evaluate,
-    catch: (cause) => new ReferenceError({ cause }),
+    catch: (cause) => new ReferenceSdkError({ cause }),
   });
 
 const collect = <A>(
@@ -61,7 +61,7 @@ const collect = <A>(
 ) =>
   Stream.fromAsyncIterable(
     iterable,
-    (cause) => new ReferenceError({ cause })
+    (cause) => new ReferenceSdkError({ cause })
   ).pipe(Stream.take(limit), Stream.runCollect);
 
 const refTaskOf = (result: unknown) => {
@@ -69,7 +69,7 @@ const refTaskOf = (result: unknown) => {
   return RefTask.toJSON(result as RefTask) as Record<string, unknown>;
 };
 
-const errorName = (error: ReferenceError) =>
+const errorName = (error: ReferenceSdkError) =>
   Predicate.hasProperty(error.cause, 'name')
     ? error.cause.name
     : String(error.cause);

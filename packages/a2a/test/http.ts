@@ -100,21 +100,26 @@ export const rpcText = (
     )
   );
 
-/** A REST call. */
+/** A REST call, with an optional JSON body and headers (default {@link v1}). */
 export const rest = (
   method: 'GET' | 'POST' | 'DELETE',
   path: string,
-  body?: Schema.Json,
-  headers: Record<string, string> = v1
+  options: {
+    readonly body?: Schema.Json;
+    readonly headers?: Record<string, string>;
+  } = {}
 ) => {
   const base = HttpClientRequest.make(method)(path).pipe(
-    HttpClientRequest.setHeaders(headers)
+    HttpClientRequest.setHeaders(options.headers ?? v1)
   );
   return send(
-    body === undefined
+    options.body === undefined
       ? base
       : base.pipe(
-          HttpClientRequest.bodyText(encodeJsonText(body), 'application/json')
+          HttpClientRequest.bodyText(
+            encodeJsonText(options.body),
+            'application/json'
+          )
         )
   );
 };

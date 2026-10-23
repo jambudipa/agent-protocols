@@ -10,6 +10,7 @@ const entries = {
   'errors/index': entry('errors/index.ts'),
   'server/index': entry('server/index.ts'),
   'client/index': entry('client/index.ts'),
+  node: entry('node.ts'),
 };
 
 export default defineConfig({

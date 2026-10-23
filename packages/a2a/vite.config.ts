@@ -1,0 +1,37 @@
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vite';
+
+const entry = (file: string) =>
+  fileURLToPath(new URL(`./src/${file}`, import.meta.url));
+
+/** One entry for each export path; the key is the path under `dist/`. */
+const entries = {
+  index: entry('index.ts'),
+};
+
+export default defineConfig({
+  build: {
+    lib: {
+      entry: entries,
+      formats: ['es'],
+      fileName: (_format, entryName) => `${entryName}.js`,
+    },
+    rolldownOptions: {
+      // Peer and runtime dependencies and Node built-ins stay external: never
+      // bundle them. Optional peers are loaded only by the entries that need
+      // them.
+      external: [
+        /^effect(\/|$)/,
+        /^@effect\//,
+        /^node:/,
+        /^jose(\/|$)/,
+        /^@grpc\/grpc-js(\/|$)/,
+        /^@bufbuild\/protobuf(\/|$)/,
+      ],
+    },
+    sourcemap: true,
+    target: 'node24',
+    minify: false,
+    ssr: true,
+  },
+});

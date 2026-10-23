@@ -20,37 +20,38 @@ export interface Workspace {
 }
 
 /** Creates the workspace at `root`, resolved against the working directory. */
-export const makeWorkspace = (root: string): Effect.Effect<Workspace, never, FileSystem.FileSystem | Path.Path> =>
-  Effect.gen(function*() {
-    const fs = yield* FileSystem.FileSystem
-    const path = yield* Path.Path
-    const workspace = path.resolve(root)
+export const makeWorkspace = Effect.fnUntraced(function*(
+  root: string
+): Effect.fn.Return<Workspace, never, FileSystem.FileSystem | Path.Path> {
+  const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
+  const workspace = path.resolve(root)
 
-    // An artifact that a step handler returns did not pass the upload schema,
-    // so check that its place stays inside the task directory.
-    const locate = (taskId: TaskId, artifact: Artifact): Option.Option<string> => {
-      const taskDirectory = path.join(workspace, taskId)
-      const file = path.join(taskDirectory, Option.getOrElse(artifact.relative_path, () => ""), artifact.file_name)
-      const relative = path.relative(taskDirectory, file)
-      return relative === "" || relative.startsWith("..") || path.isAbsolute(relative)
-        ? Option.none()
-        : Option.some(file)
-    }
+  // An artifact that a step handler returns did not pass the upload schema,
+  // so check that its place stays inside the task directory.
+  const locate = (taskId: TaskId, artifact: Artifact): Option.Option<string> => {
+    const taskDirectory = path.join(workspace, taskId)
+    const file = path.join(taskDirectory, Option.getOrElse(artifact.relative_path, () => ""), artifact.file_name)
+    const relative = path.relative(taskDirectory, file)
+    return relative === "" || relative.startsWith("..") || path.isAbsolute(relative)
+      ? Option.none()
+      : Option.some(file)
+  }
 
-    return {
-      store: (taskId, artifact, source) =>
-        Option.match(locate(taskId, artifact), {
-          // The upload schema rejects any path that leaves the task directory.
-          onNone: () => Effect.die(new Error(`Artifact ${artifact.artifact_id} is outside the task directory`)),
-          onSome: (file) =>
-            fs.makeDirectory(path.dirname(file), { recursive: true }).pipe(
-              Effect.andThen(fs.copyFile(source, file))
-            )
-        }),
-      read: (taskId, artifact) =>
-        Option.match(locate(taskId, artifact), {
-          onNone: () => Effect.succeedNone,
-          onSome: (file) => Effect.map(fs.readFile(file), Option.some)
-        })
-    }
-  })
+  return {
+    store: (taskId, artifact, source) =>
+      Option.match(locate(taskId, artifact), {
+        // The upload schema rejects any path that leaves the task directory.
+        onNone: () => Effect.die(new Error(`Artifact ${artifact.artifact_id} is outside the task directory`)),
+        onSome: (file) =>
+          fs.makeDirectory(path.dirname(file), { recursive: true }).pipe(
+            Effect.andThen(fs.copyFile(source, file))
+          )
+      }),
+    read: (taskId, artifact) =>
+      Option.match(locate(taskId, artifact), {
+        onNone: () => Effect.succeedNone,
+        onSome: (file) => Effect.map(fs.readFile(file), Option.some)
+      })
+  }
+})

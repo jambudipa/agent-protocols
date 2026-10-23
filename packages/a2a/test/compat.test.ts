@@ -9,7 +9,6 @@ import {
   Proto,
   Translate,
   V03,
-  duplicateInterfacesForLegacy,
   isLegacyAgentCard,
   legacyPushNotificationToV1StreamResponse,
   parseLegacyAgentCard,
@@ -17,21 +16,10 @@ import {
   toCoreAgentCard,
 } from '../src/compat/v0_3/index.js';
 import { legacyCompat } from '../src/compat/v0_3/server/index.js';
-import type { AgentCard, Part } from '../src/index.js';
+import type { Part } from '../src/index.js';
 import { at, json, sse } from './http.js';
+import { legacyCard } from './compat-support.js';
 import { echoCard, testServer } from './support.js';
-
-/** The echo card with a v0.3 copy of each interface. */
-export const legacyCard = (baseUrl: string): AgentCard => {
-  const card = echoCard(baseUrl);
-  return {
-    ...card,
-    supportedInterfaces: duplicateInterfacesForLegacy(
-      card.supportedInterfaces,
-      ['JSONRPC', 'HTTP+JSON']
-    ),
-  };
-};
 
 describe('translators', () => {
   it.effect('round-trips parts, wrapping non-object data', () =>

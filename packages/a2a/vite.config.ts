@@ -8,6 +8,7 @@ const entry = (file: string) =>
 const entries = {
   index: entry('index.ts'),
   'errors/index': entry('errors/index.ts'),
+  'server/index': entry('server/index.ts'),
 };
 
 export default defineConfig({

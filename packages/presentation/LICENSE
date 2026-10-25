@@ -1,0 +1,21 @@
+ISC license declaration and source notice
+
+This package contains a port of jam-flow source at commit
+4f8dafdfdc571fbd811b1685e329ae1d96e26b3e. The upstream package manifests declare
+ISC. The upstream repository root provides no LICENSE file at that commit, and
+no copyright notice appears in the inspected source modules. No missing upstream
+copyright notice is invented here. See PROVENANCE.md and upstream-sources.json.
+
+The ISC permission text is reproduced for the declared license:
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.

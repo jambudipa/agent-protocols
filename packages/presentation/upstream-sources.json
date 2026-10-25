@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/jambudipa/jam-flow",
+  "commit": "4f8dafdfdc571fbd811b1685e329ae1d96e26b3e",
+  "files": {
+    "packages/flow/src/presentation/messages.ts": "1321f96d5cb97d62e63285d201a854391d12f9ad64a6295bae2f8ff90b30712d",
+    "packages/flow/src/presentation/interactions.ts": "d958492128252026e256196ee172adce1a20f432e42e7a75caa17c8eaa05d4e0",
+    "packages/flow/src/presentation/presentation-projection.ts": "90d5b88839174355177012f6e46220a8a5323020fdf501a4d9456077a4f94e0f",
+    "packages/events/src/json-value/index.ts": "b0b2a143ba7576403e19b794d8521df9fee4f0259e80ff384e4db4cbd2c1fb71",
+    "packages/events/src/interaction/index.ts": "441edb3acd590d0cb937e3ae8d7f526098346e409e6bbfa406abfa63f09d6352",
+    "packages/flow/src/presentation/test/messages.test.ts": "884a308749743563eb95688cc50c263ea5b1eb739ecc4c0c2b0780313fe59479",
+    "packages/flow/src/presentation/test/interactions.test.ts": "1dcdd85b092cd5e4a0c070fbf61de23e04b5deab76f825d99a9b25467b2fe171",
+    "packages/flow/src/presentation/test/json-value.test.ts": "86093b08b32e97902e41b5ea4dc48333d161cd84058b0370264fb45de3777fa4",
+    "packages/flow/src/presentation/test/presentation-projection.test.ts": "fd76ac8fb82d57effa5ccd9876e091914a26437231a3a7a401066395181da1ea",
+    "packages/flow/package.json": "15709451eaa6e91ff87ce8a5c536f08d79c44daaaf9c704de19ef17c9f8969a3",
+    "packages/events/package.json": "76ef28f6e06ed0cb8d4274793661bb99d85b069e66aadc44e1d6a0052f59c70f"
+  }
+}

@@ -83,19 +83,21 @@ export class TaskStore extends Context.Service<
 
 const statusTimestamp = (task: Task) => task.status.timestamp ?? '';
 
+const epochMillis = (timestamp: string): Option.Option<number> =>
+  Option.map(DateTime.make(timestamp), DateTime.toEpochMillis);
+
 /**
- * Newest status timestamp first, then id descending, as the reference SDK
+ * Newest status time (by epoch milliseconds) first, then id descending, as the reference SDK
  * orders a task list.
  *
  * @since 0.1.0
  */
 export const taskListOrder: Order.Order<Task> = Order.combine(
-  Order.mapInput(Order.flip(Order.String), statusTimestamp),
+  Order.mapInput(Order.flip(Order.Number), (task: Task) =>
+    Option.getOrElse(epochMillis(statusTimestamp(task)), () => 0)
+  ),
   Order.mapInput(Order.flip(Order.String), (task: Task) => task.id)
 );
-
-const epochMillis = (timestamp: string): Option.Option<number> =>
-  Option.map(DateTime.make(timestamp), DateTime.toEpochMillis);
 
 /**
  * Filters, orders and pages a list of tasks for a `ListTasks` request. A

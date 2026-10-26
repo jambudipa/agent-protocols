@@ -63,6 +63,13 @@ layer(testServer(), { excludeTestServices: true })('JSON-RPC binding', (it) => {
     })
   );
 
+  it.effect('answers an unknown method without params with -32601', () =>
+    Effect.gen(function* () {
+      const response = yield* rpc({ jsonrpc: '2.0', id: 1, method: 'Nope' });
+      assert.strictEqual(at(json(response), 'error', 'code'), -32601);
+    })
+  );
+
   it.effect('answers SendMessage without message with -32602', () =>
     Effect.gen(function* () {
       const response = yield* rpc({

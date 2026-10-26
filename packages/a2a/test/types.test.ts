@@ -13,6 +13,7 @@ import {
   Task,
   TaskStatus,
 } from '../src/index.js';
+import { pageTasks } from '../src/server/index.js';
 
 const decode = <T, E>(schema: Schema.Codec<T, E>) =>
   Schema.decodeUnknownSync(schema);
@@ -129,5 +130,38 @@ it.effect('round trips a task through the reference codec', () =>
     const ours = encode(Task)(decode(Task)(wire));
     assert.deepStrictEqual(ours, wire);
     assert.deepStrictEqual(RefTask.toJSON(RefTask.fromJSON(ours)), wire);
+  })
+);
+
+it('normalises a timestamp with an offset to UTC Z form', () => {
+  const status = decode(TaskStatus)({ timestamp: '2026-10-23T10:00:00+01:00' });
+  assert.strictEqual(status.timestamp, '2026-10-23T09:00:00.000Z');
+});
+
+it('reads an int32 written as a JSON string and writes a number', () => {
+  const response = decode(ListTasksResponse)({ pageSize: '10', totalSize: 3 });
+  assert.strictEqual(response.pageSize, 10);
+  assert.strictEqual(encode(ListTasksResponse)(response).pageSize, 10);
+  assert.ok(fails(ListTasksResponse, { pageSize: '1.5' }));
+});
+
+it.effect('orders a task list by status time, not by timestamp text', () =>
+  Effect.gen(function* () {
+    const task = (id: string, timestamp: string): Task => ({
+      id,
+      status: { state: 'TASK_STATE_COMPLETED', timestamp },
+    });
+    // As text, "…00Z" sorts after "…00.500Z"; in time it is earlier.
+    const page = yield* pageTasks(
+      [
+        task('whole', '2026-10-23T00:00:00Z'),
+        task('half', '2026-10-23T00:00:00.500Z'),
+      ],
+      { pageSize: 10 }
+    );
+    assert.deepStrictEqual(
+      page.tasks.map((entry) => entry.id),
+      ['half', 'whole']
+    );
   })
 );

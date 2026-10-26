@@ -8,7 +8,7 @@
  *
  * @internal
  */
-import { Effect, Schema, SchemaGetter } from 'effect';
+import { DateTime, Effect, Option, Schema, SchemaGetter } from 'effect';
 
 /**
  * A REQUIRED field: a missing key decodes to `value`, and the field always
@@ -37,7 +37,15 @@ export const optionalStrings = Schema.optionalKey(Schema.Array(Schema.String));
 export const optionalBoolean = Schema.optionalKey(Schema.Boolean);
 
 /** An `int32`. @internal */
-export const Int32 = Schema.Number.check(Schema.isInt32());
+export const Int32 = Schema.Union([
+  Schema.Number,
+  Schema.NumberFromString,
+]).pipe(
+  Schema.decodeTo(Schema.Number.check(Schema.isInt32()), {
+    decode: SchemaGetter.passthrough(),
+    encode: SchemaGetter.passthrough(),
+  })
+);
 
 /** An optional `int32`. @internal */
 export const optionalInt32 = Schema.optionalKey(Int32);
@@ -61,7 +69,20 @@ export const Timestamp = Schema.String.check(
     /^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(\.\d{1,9})?([Zz]|[+-]\d{2}:\d{2})$/,
     { expected: 'an RFC 3339 timestamp' }
   )
-).annotate({ identifier: 'Timestamp' });
+)
+  .pipe(
+    Schema.decodeTo(Schema.String, {
+      // Normalised to UTC with a `Z` suffix, as specification §5.6.1 requires.
+      decode: SchemaGetter.transform((value: string) =>
+        Option.match(DateTime.make(value), {
+          onNone: () => value,
+          onSome: DateTime.formatIso,
+        })
+      ),
+      encode: SchemaGetter.passthrough(),
+    })
+  )
+  .annotate({ identifier: 'Timestamp' });
 
 /**
  * A protobuf enum. ProtoJSON writes the value name; a decoder also accepts

@@ -18,7 +18,11 @@ import type {
   TaskStatusUpdateEvent,
 } from '../../Types.js';
 import type { AgentExecutionEvent } from '../ExecutionEventBus.js';
-import type { ServerCallContext } from '../ServerCallContext.js';
+import {
+  CurrentOwnerResolver,
+  callerScope,
+  type ServerCallContext,
+} from '../ServerCallContext.js';
 import type { TaskStore, TaskStoreError } from '../TaskStore.js';
 import type { KeyedLock } from './KeyedLock.js';
 import { isTerminal } from './utils.js';
@@ -77,6 +81,8 @@ export const makeResultManager = (
   latestUserMessage: Option.Option<Message>
 ): Effect.Effect<ResultManager> =>
   Effect.gen(function* () {
+    // The lock scope is the store scope: tenant, then resolved owner.
+    const scope = callerScope(context, yield* CurrentOwnerResolver);
     const state = yield* Ref.make<State>({
       currentTask: Option.none(),
       finalMessage: Option.none(),
@@ -91,9 +97,7 @@ export const makeResultManager = (
     const locked = (taskId: string) =>
       taskId === ''
         ? <A, E, R>(effect: Effect.Effect<A, E, R>) => effect
-        : lock.withLock(
-            `${context.tenant}\u0000${context.user.userName}\u0000${taskId}`
-          );
+        : lock.withLock(`${scope.tenant}\u0000${scope.owner}\u0000${taskId}`);
 
     const noteTaskId = (taskId: string) =>
       taskId === ''

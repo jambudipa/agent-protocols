@@ -51,34 +51,6 @@ export default [
   effectLintConfig(SOURCES),
 
   {
-    // The presentation wire boundary must have an Effect-free browser closure.
-    // Native null/undefined model JSON and absence; Set uses identity for cycles.
-    // JSON.stringify sees primitive strings only. The catch rejects hostile proxies.
-    files: ['packages/presentation/src/wire/**/*.ts'],
-    rules: {
-      'effect/no-null-use-option': 'off',
-      'effect/no-undefined-use-option': 'off',
-      'effect/no-set-use-hashset': 'off',
-      'effect/no-json-stringify-use-schema': 'off',
-      'effect/no-try-catch-use-effect': 'off',
-    },
-  },
-
-  {
-    // Boundary fixtures intentionally supply foreign runtime values and absent fields.
-    files: ['packages/presentation/test/**/*.ts'],
-    rules: {
-      'effect/no-null-use-option': 'off',
-      'effect/no-undefined-use-option': 'off',
-      'effect/no-new-date-use-datetime': 'off',
-      'effect/no-map-use-hashmap': 'off',
-      'effect/no-set-use-hashset': 'off',
-      'effect/no-json-stringify-use-schema': 'off',
-      'effect/no-json-parse-use-schema': 'off',
-    },
-  },
-
-  {
     // gRPC boundary (@jambudipa/a2a): the @grpc/grpc-js unary callback reads
     // a `null` error as success, so this one adapter file writes `null`.
     files: ['packages/a2a/src/server/grpc/internal/callbacks.ts'],

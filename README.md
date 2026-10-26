@@ -9,7 +9,7 @@ plus the agent-to-UI presentation format.
 | Agent to tools | MCP                                                                           | none: reuse `effect/ai` (see below)                              | Available in `effect@4.0.6` |
 | Human to agent | [Agent Protocol v1](https://github.com/AI-Engineer-Foundation/agent-protocol) | [`@jambudipa/agent-protocol`](packages/agent-protocol/README.md) | Server and client           |
 | Agent to agent | [A2A v1.0](https://a2a-protocol.org)                                          | [`@jambudipa/a2a`](packages/a2a/README.md)                       | Server and client           |
-| Agent to UI    | jam-flow presentation wire format                                             | [`@jambudipa/presentation`](packages/presentation/README.md)     | Selected V1 data surface    |
+| Agent to UI    | jam-flow presentation wire format                                             | `@jambudipa/presentation`                                        | Planned                     |
 
 ## MCP: reuse `effect/ai`
 

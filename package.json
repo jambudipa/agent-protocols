@@ -26,7 +26,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest --coverage",
     "lint": "npm run lint:eslint; e=$?; npm run lint:effect; f=$?; exit $(( e > f ? e : f ))",
-    "lint:eslint": "eslint . --max-warnings=0",
+    "lint:eslint": "NODE_OPTIONS=--max-old-space-size=8192 eslint . --max-warnings=0",
     "lint:effect": "effect-language-service diagnostics --project tsconfig.json --format text --severity ${EFFECT_SEVERITY:-error,warning} --strict",
     "lint:effect:all": "EFFECT_SEVERITY=error,warning,message npm run lint:effect",
     "format": "prettier --write .",

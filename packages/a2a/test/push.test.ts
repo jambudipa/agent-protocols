@@ -63,6 +63,9 @@ class Webhook extends Context.Service<
   );
 }
 
+/** Webhook delivery waits on background fibers; a loaded run needs time. */
+const PUSH_TIMEOUT = 30_000;
+
 const decodeEvent = Schema.decodeUnknownSync(
   Schema.fromJsonString(StreamResponse)
 );
@@ -111,42 +114,46 @@ layer(Layer.merge(testServer(), Webhook.layer), { excludeTestServices: true })(
             last.statusUpdate.status.state,
             'TASK_STATE_COMPLETED'
           );
-        })
+        }),
+      PUSH_TIMEOUT
     );
 
-    it.effect('sends a config token in X-A2A-Notification-Token', () =>
-      Effect.gen(function* () {
-        const webhook = yield* Webhook;
-        const task = at(
-          json(
-            yield* rest('POST', '/message:send', {
-              body: {
-                message: userMessage(nextId(), 'input'),
-              },
-            })
-          ),
-          'task'
-        );
-        const id = at(task, 'id') as string;
-        const created = yield* rest(
-          'POST',
-          `/tasks/${id}/pushNotificationConfigs`,
-          {
-            body: { url: webhook.url, token: 'opaque-token' },
-          }
-        );
-        assert.strictEqual(created.status, 201);
-        yield* rest('POST', `/tasks/${id}:cancel`);
-        const delivery = yield* Queue.take(webhook.deliveries);
-        assert.strictEqual(delivery.token, 'opaque-token');
-        assert.strictEqual(delivery.authorization, '');
-        const event = decodeEvent(delivery.body);
-        assert.ok('statusUpdate' in event);
-        assert.strictEqual(
-          event.statusUpdate.status.state,
-          'TASK_STATE_CANCELED'
-        );
-      })
+    it.effect(
+      'sends a config token in X-A2A-Notification-Token',
+      () =>
+        Effect.gen(function* () {
+          const webhook = yield* Webhook;
+          const task = at(
+            json(
+              yield* rest('POST', '/message:send', {
+                body: {
+                  message: userMessage(nextId(), 'input'),
+                },
+              })
+            ),
+            'task'
+          );
+          const id = at(task, 'id') as string;
+          const created = yield* rest(
+            'POST',
+            `/tasks/${id}/pushNotificationConfigs`,
+            {
+              body: { url: webhook.url, token: 'opaque-token' },
+            }
+          );
+          assert.strictEqual(created.status, 201);
+          yield* rest('POST', `/tasks/${id}:cancel`);
+          const delivery = yield* Queue.take(webhook.deliveries);
+          assert.strictEqual(delivery.token, 'opaque-token');
+          assert.strictEqual(delivery.authorization, '');
+          const event = decodeEvent(delivery.body);
+          assert.ok('statusUpdate' in event);
+          assert.strictEqual(
+            event.statusUpdate.status.state,
+            'TASK_STATE_CANCELED'
+          );
+        }),
+      PUSH_TIMEOUT
     );
   }
 );

@@ -89,14 +89,15 @@ it. A refused update returns the _previous_ snapshot alongside the error, so a
 caller that ignores the error still holds something that once validated.
 
 **A refusal is a value.** `Option.none()` means valid; `Option.some(error)`
-means refused. No validator throws. The two decoders in
-`presentation-projection.ts` are wrapped in `Result.try` at every call site, so
-a failure surfaces as `None`. `snapshotBytes` assumes an entry that has been
-through `validateSnapshot`, which is why `validateSnapshot` calls it last.
-Validate, then measure.
+means refused. No validator throws. The `Sync` schema bindings do: the two
+decoders in `presentation-projection.ts` are wrapped in `Result.try` at every
+call site so a failure surfaces as `None`, and the encoders used for byte
+measurement assume an already-checked value — `snapshotBytes` throws on an entry
+that has not been through `validateSnapshot`, which is why `validateSnapshot`
+calls it last. Validate, then measure.
 
-**Absent is not empty.** `Option.none()` stands for an unstated title, an
-unreported cost, an undeclared MIME type. Never substitute a default a person
+**Absent is not empty.** `Option.none()` for an unstated title, an unreported
+cost, an undeclared MIME type; an omitted key for an uncorrelated field. Never substitute a default a person
 would read as a fact — "£0.12" and "£0.12 of an unknown larger amount" are
 different claims, and `costComplete` exists to keep them apart.
 
@@ -137,7 +138,8 @@ same commit.
   counts are the same.
 - The exhaustive check in `validateBlock` ends in `absurd` from `effect`, not in
   jam-flow's `failUnclassified`. The branch stays unreachable and a forged kind
-  stays a defect.
+  stays a defect, but the thrown value is now the plain `absurd` error. Unlike
+  jam-flow's `FlowFrameworkDefect`, it does not name the kind or the component.
 
 ## License
 

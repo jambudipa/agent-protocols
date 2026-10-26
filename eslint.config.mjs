@@ -56,4 +56,53 @@ export default [
     files: ['packages/a2a/src/server/grpc/internal/callbacks.ts'],
     rules: { 'effect/no-null-use-option': 'off' },
   },
+
+  {
+    // @jambudipa/presentation: the JSON guard detects cycles by object
+    // identity. `HashSet` hashes structurally, which enumerates the value and
+    // would invoke the getters that the guard exists to avoid.
+    files: ['packages/presentation/src/json-value.ts'],
+    rules: { 'effect/no-set-use-hashset': 'off' },
+  },
+
+  {
+    // @jambudipa/presentation: the guard tests feed hostile wire values. JSON
+    // `null`, a missing `undefined` field, and a `Date`, `Map` or `Set` that
+    // must be refused (and that fence defect D7) are the input under test.
+    files: [
+      'packages/presentation/test/interactions.test.ts',
+      'packages/presentation/test/json-value.test.ts',
+      'packages/presentation/test/messages.test.ts',
+      'packages/presentation/test/presentation-projection.test.ts',
+    ],
+    rules: {
+      'effect/no-null-use-option': 'off',
+      'effect/no-undefined-use-option': 'off',
+      'effect/no-new-date-use-datetime': 'off',
+      'effect/no-map-use-hashmap': 'off',
+      'effect/no-set-use-hashset': 'off',
+    },
+  },
+
+  {
+    // @jambudipa/presentation: one test proves that a host projection which
+    // throws a native `Error` is silenced. The throw is the input under test.
+    files: ['packages/presentation/test/presentation-projection.test.ts'],
+    rules: {
+      'effect/no-throw-use-effect': 'off',
+      'effect/no-error-constructor': 'off',
+    },
+  },
+
+  {
+    // @jambudipa/presentation: a test drops one key from a wire record with a
+    // rest destructure, so the dropped binding is unused on purpose.
+    files: ['packages/presentation/test/messages.test.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { ignoreRestSiblings: true },
+      ],
+    },
+  },
 ];

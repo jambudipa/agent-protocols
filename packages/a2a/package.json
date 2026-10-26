@@ -2,6 +2,15 @@
   "name": "@jambudipa/a2a",
   "version": "0.1.0",
   "description": "A2A v1.0 server and client for Effect v4, over JSON-RPC, gRPC and HTTP+JSON.",
+  "keywords": [
+    "effect",
+    "a2a",
+    "agent2agent",
+    "ai-agents",
+    "grpc",
+    "json-rpc"
+  ],
+  "author": "jambudipa",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jambudipa/agent-protocols.git",

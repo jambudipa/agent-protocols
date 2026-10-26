@@ -2,6 +2,13 @@
   "name": "@jambudipa/presentation",
   "version": "0.1.0",
   "description": "The agent-to-UI presentation wire format, V1 and T5 contracts, for Effect v4.",
+  "keywords": [
+    "effect",
+    "ai-agents",
+    "agent-ui",
+    "wire-format"
+  ],
+  "author": "jambudipa",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jambudipa/agent-protocols.git",

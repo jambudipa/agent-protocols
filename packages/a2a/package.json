@@ -27,7 +27,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "a2a-db": "./dist/bin/a2a-db.js"
+    "a2a-db": "dist/bin/a2a-db.js"
   },
   "exports": {
     ".": {

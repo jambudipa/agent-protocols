@@ -260,6 +260,21 @@ const withTenant = (
     : context;
 };
 
+/** The v1.0 JSON-RPC methods. */
+const METHODS: ReadonlyArray<string> = [
+  'SendMessage',
+  'SendStreamingMessage',
+  'SubscribeToTask',
+  'GetTask',
+  'ListTasks',
+  'CancelTask',
+  'CreateTaskPushNotificationConfig',
+  'GetTaskPushNotificationConfig',
+  'ListTaskPushNotificationConfigs',
+  'DeleteTaskPushNotificationConfig',
+  'GetExtendedAgentCard',
+];
+
 const encodeTask = encodeJson(Task);
 const encodeStreamResponse = encodeJson(StreamResponse);
 
@@ -339,6 +354,14 @@ export const makeJsonRpcDispatcher = (
         });
       }
       const { id, method, params } = envelope.success;
+      if (!METHODS.includes(method)) {
+        return JsonRpcOutcome.Response({
+          body: errorEnvelope(id, {
+            code: A2A_ERROR_CODE.METHOD_NOT_FOUND,
+            message: 'Invalid method.',
+          }),
+        });
+      }
       if (method !== 'GetExtendedAgentCard' && !paramsAreValid(params)) {
         return JsonRpcOutcome.Response({
           body: errorEnvelope(

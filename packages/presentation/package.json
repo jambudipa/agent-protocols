@@ -1,0 +1,53 @@
+{
+  "name": "@jambudipa/presentation",
+  "version": "0.1.0",
+  "description": "The agent-to-UI presentation wire format, V1 and T5 contracts, for Effect v4.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jambudipa/agent-protocols.git",
+    "directory": "packages/presentation"
+  },
+  "homepage": "https://github.com/jambudipa/agent-protocols/tree/master/packages/presentation#readme",
+  "bugs": {
+    "url": "https://github.com/jambudipa/agent-protocols/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.json --emitDeclarationOnly",
+    "dev": "vite build --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm run typecheck",
+    "prepack": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "effect": "~4.0.6"
+  },
+  "devDependencies": {
+    "effect": "~4.0.6"
+  }
+}

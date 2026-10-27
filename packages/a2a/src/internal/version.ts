@@ -9,11 +9,22 @@ import {
   A2A_PROTOCOL_VERSION,
 } from '../Constants.js';
 
+/**
+ * A protocol version reduced to the two components that the legacy check
+ * compares. Any patch component is dropped.
+ */
 interface ParsedVersion {
+  /** A non-negative integer. */
   readonly major: number;
+  /** A non-negative integer; 0 when the version names no minor component. */
   readonly minor: number;
 }
 
+/**
+ * Parses `major[.minor[...]]`. It returns `Option.none()` for an empty or
+ * negative version. `Number.parseInt` is lenient, so a trailing suffix such as
+ * `1.0-rc` still parses as 1.0.
+ */
 const parseVersion = (version: string): Option.Option<ParsedVersion> => {
   const trimmed = version.trim();
   if (trimmed === '') return Option.none();
@@ -28,6 +39,10 @@ const parseVersion = (version: string): Option.Option<ParsedVersion> => {
     : Option.none();
 };
 
+/**
+ * Orders two versions by major, then minor. The sign of the result is the
+ * order; the magnitude carries no meaning.
+ */
 const compareVersions = (a: ParsedVersion, b: ParsedVersion) =>
   a.major !== b.major ? a.major - b.major : a.minor - b.minor;
 

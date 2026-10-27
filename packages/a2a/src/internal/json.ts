@@ -6,6 +6,10 @@
  */
 import { Schema } from 'effect';
 
+/**
+ * The one codec between JSON text and `Schema.Json` that every helper here
+ * derives from, so parsing and rendering share the same rules.
+ */
 const JsonText = Schema.fromJsonString(Schema.Json);
 
 /**

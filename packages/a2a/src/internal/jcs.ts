@@ -6,6 +6,10 @@
  */
 import { Predicate, type Schema } from 'effect';
 
+/**
+ * The short escapes that RFC 8785 takes from `JSON.stringify`. Any other
+ * control character falls through to a `\u` escape.
+ */
 const escapes: { readonly [char: string]: string } = {
   '"': '\\"',
   '\\': '\\\\',
@@ -16,6 +20,7 @@ const escapes: { readonly [char: string]: string } = {
   '\t': '\\t',
 };
 
+/** Formats a UTF-16 code unit as the four lowercase hex digits of a `\u` escape. */
 const hex4 = (code: number) => code.toString(16).padStart(4, '0');
 
 /**
@@ -64,6 +69,11 @@ const compareKeys = (a: string, b: string): number =>
 export const canonicalize = (value: Schema.Json): string =>
   canonicalizeUnknown(value);
 
+/**
+ * The recursive worker behind `canonicalize`. It takes `unknown` so that it
+ * tolerates values outside `Schema.Json`: a non-finite number and any other
+ * non-JSON value become `null`, and an `undefined` member is dropped.
+ */
 const canonicalizeUnknown = (value: unknown): string => {
   if (Predicate.isNull(value)) return 'null';
   if (Predicate.isBoolean(value)) return value ? 'true' : 'false';

@@ -38,6 +38,10 @@ export interface AuthenticationHandler {
   readonly onSuccessfulRetry?: (headers: HttpHeaders) => Effect.Effect<void>;
 }
 
+/**
+ * Adds the authentication headers to a request. A header that the request
+ * already carries is kept, so a caller can override a credential per call.
+ */
 const withAuthHeaders = (
   request: HttpClientRequest.HttpClientRequest,
   auth: HttpHeaders

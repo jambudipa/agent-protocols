@@ -41,6 +41,10 @@ export type ServiceParameters = { readonly [name: string]: string };
  * @since 0.1.0
  */
 export interface CallOptions {
+  /**
+   * Headers to send with the call. A transport's own headers, such as
+   * `Content-Type`, win over a parameter of the same name.
+   */
   readonly serviceParameters?: ServiceParameters;
 }
 
@@ -54,46 +58,57 @@ export interface Transport {
   readonly protocolName: string;
   /** The protocol version that the transport speaks, such as `1.0`. */
   readonly protocolVersion: string;
+  /** Fetches the authenticated extended card; the caller checks the capability. */
   readonly getExtendedAgentCard: (
     params: GetExtendedAgentCardRequest,
     options?: CallOptions
   ) => Effect.Effect<AgentCard, ClientError>;
+  /** Sends a message and returns the task or the direct reply message. */
   readonly sendMessage: (
     params: SendMessageRequest,
     options?: CallOptions
   ) => Effect.Effect<SendMessageResult, ClientError>;
+  /** Sends a message and streams the events; needs the streaming capability. */
   readonly sendMessageStream: (
     params: SendMessageRequest,
     options?: CallOptions
   ) => Stream.Stream<StreamResponse, ClientError>;
+  /** Fetches a task by id. */
   readonly getTask: (
     params: GetTaskRequest,
     options?: CallOptions
   ) => Effect.Effect<Task, ClientError>;
+  /** Asks the agent to cancel a task; returns the task in its new state. */
   readonly cancelTask: (
     params: CancelTaskRequest,
     options?: CallOptions
   ) => Effect.Effect<Task, ClientError>;
+  /** Lists tasks, one page at a time. */
   readonly listTasks: (
     params: ListTasksRequest,
     options?: CallOptions
   ) => Effect.Effect<ListTasksResponse, ClientError>;
+  /** Registers a push notification config for a task. */
   readonly createTaskPushNotificationConfig: (
     params: TaskPushNotificationConfig,
     options?: CallOptions
   ) => Effect.Effect<TaskPushNotificationConfig, ClientError>;
+  /** Fetches one push notification config of a task. */
   readonly getTaskPushNotificationConfig: (
     params: GetTaskPushNotificationConfigRequest,
     options?: CallOptions
   ) => Effect.Effect<TaskPushNotificationConfig, ClientError>;
+  /** Lists the push notification configs of a task. */
   readonly listTaskPushNotificationConfig: (
     params: ListTaskPushNotificationConfigsRequest,
     options?: CallOptions
   ) => Effect.Effect<ListTaskPushNotificationConfigsResponse, ClientError>;
+  /** Deletes one push notification config of a task. */
   readonly deleteTaskPushNotificationConfig: (
     params: DeleteTaskPushNotificationConfigRequest,
     options?: CallOptions
   ) => Effect.Effect<void, ClientError>;
+  /** Streams the events of an existing task again. */
   readonly resubscribeTask: (
     params: SubscribeToTaskRequest,
     options?: CallOptions

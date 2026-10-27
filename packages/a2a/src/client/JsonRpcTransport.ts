@@ -55,13 +55,16 @@ import {
   pickMatchingInterface,
 } from './Transport.js';
 
+/** The protocol name in the transport errors of this file. */
 const PROTOCOL = TransportProtocol.JSONRPC;
 
+/** Narrows JSON to an object, excluding arrays, before a field read. */
 const isObject = (
   value: Schema.Json
 ): value is { readonly [key: string]: Schema.Json } =>
   Predicate.isObject(value) && !Array.isArray(value);
 
+/** Decodes a JSON-RPC error object; `Option.none()` when it is malformed. */
 const decodeErrorObject = Schema.decodeUnknownOption(JsonRpcErrorObject);
 
 /**
@@ -87,6 +90,10 @@ export const fromJsonRpcErrorResponse = (
       }),
   });
 
+/**
+ * Rejects a response envelope that is not an object with `jsonrpc` exactly
+ * `2.0`. `context` names the method in the error message.
+ */
 const requireVersion = (
   value: Schema.Json,
   context: string
@@ -112,6 +119,10 @@ const requireVersion = (
 export interface JsonRpcTransportOptions {
   /** The URL of the JSON-RPC endpoint. */
   readonly endpoint: string;
+  /**
+   * The client that sends the requests. Wrap it with `withAuthentication`
+   * to add credentials.
+   */
   readonly httpClient: HttpClient.HttpClient;
   /** The protocol version to announce. The default is `1.0`. */
   readonly protocolVersion?: string;

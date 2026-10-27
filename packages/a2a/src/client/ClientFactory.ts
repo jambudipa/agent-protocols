@@ -30,9 +30,14 @@ export interface ClientFactoryOptions {
    * `GrpcTransportFactory` of `@jambudipa/a2a/client/grpc` for gRPC.
    */
   readonly transports?: ReadonlyArray<TransportFactory>;
+  /** The configuration of every client that the factory builds. */
   readonly clientConfig?: ClientConfig;
   /** Bindings to try before the order of the card. */
   readonly preferredTransports?: ReadonlyArray<TransportProtocolName>;
+  /**
+   * The resolver of `createFromUrl`. The default is
+   * `DefaultAgentCardResolver` on the `HttpClient` of the context.
+   */
   readonly cardResolver?: AgentCardResolver;
 }
 
@@ -42,6 +47,11 @@ export interface ClientFactoryOptions {
  * @since 0.1.0
  */
 export interface ClientFactory {
+  /**
+   * The options that the factory was made with, as given: the defaults are
+   * not filled in. Pass them to `mergeClientFactoryOptions` to derive a
+   * factory.
+   */
   readonly options: ClientFactoryOptions;
   /**
    * Builds a client from a card: the first binding of the preferred
@@ -59,9 +69,17 @@ export interface ClientFactory {
   ) => Effect.Effect<Client, ClientError>;
 }
 
+/**
+ * A configuration fault of the factory, such as no transports or an unknown
+ * preferred transport. It is a transport error with protocol `client`.
+ */
 const configError = (message: string) =>
   new A2ATransportError({ message, protocol: 'client' });
 
+/**
+ * Indexes the factories by upper-case protocol name, because bindings match
+ * case-insensitively. Fails when two factories claim the same name.
+ */
 const byName = (
   transports: ReadonlyArray<TransportFactory>
 ): Effect.Effect<
@@ -109,6 +127,11 @@ export const mergeClientFactoryOptions = (
   };
 };
 
+/**
+ * Validates the options once, so that a bad transport list or an unknown
+ * preferred transport fails at `make` rather than at the first call.
+ * `defaults` fill the transports and the resolver that the options omit.
+ */
 const makeFactory = (
   options: ClientFactoryOptions,
   defaults: {

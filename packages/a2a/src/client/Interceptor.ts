@@ -33,43 +33,54 @@ import type { CallOptions } from './Transport.js';
  * @since 0.1.0
  */
 export interface ClientMethodTypes {
+  /** The extended card call that `Client.getAgentCard` makes. */
   readonly getAgentCard: {
     readonly input: GetExtendedAgentCardRequest;
     readonly result: AgentCard;
   };
+  /** A blocking or polling message send. */
   readonly sendMessage: {
     readonly input: SendMessageRequest;
     readonly result: SendMessageResult;
   };
+  /** A streaming message send; the result is one stream event. */
   readonly sendMessageStream: {
     readonly input: SendMessageRequest;
     readonly result: StreamResponse;
   };
+  /** The registration of a push notification config. */
   readonly createTaskPushNotificationConfig: {
     readonly input: TaskPushNotificationConfig;
     readonly result: TaskPushNotificationConfig;
   };
+  /** The fetch of one push notification config. */
   readonly getTaskPushNotificationConfig: {
     readonly input: GetTaskPushNotificationConfigRequest;
     readonly result: TaskPushNotificationConfig;
   };
+  /** The listing of the push notification configs of a task. */
   readonly listTaskPushNotificationConfig: {
     readonly input: ListTaskPushNotificationConfigsRequest;
     readonly result: ListTaskPushNotificationConfigsResponse;
   };
+  /** The deletion of a push notification config; its result is `void`. */
   readonly deleteTaskPushNotificationConfig: {
     readonly input: DeleteTaskPushNotificationConfigRequest;
     readonly result: void;
   };
+  /** The fetch of a task by id. */
   readonly getTask: { readonly input: GetTaskRequest; readonly result: Task };
+  /** The cancellation of a task. */
   readonly cancelTask: {
     readonly input: CancelTaskRequest;
     readonly result: Task;
   };
+  /** The listing of tasks. */
   readonly listTasks: {
     readonly input: ListTasksRequest;
     readonly result: ListTasksResponse;
   };
+  /** A resubscription to a task; the result is one stream event. */
   readonly resubscribeTask: {
     readonly input: SubscribeToTaskRequest;
     readonly result: StreamResponse;
@@ -113,8 +124,14 @@ export type ClientCallResult<M extends ClientMethod = ClientMethod> = {
  * @since 0.1.0
  */
 export interface BeforeArgs {
+  /** The call input, as changed by the interceptors that ran before. */
   readonly input: ClientCallInput;
+  /** The client's current card, read once at the start of the call. */
   readonly agentCard: AgentCard;
+  /**
+   * The call options, with `A2A-Version` and the extensions header already
+   * normalized for the transport's protocol version.
+   */
   readonly options: CallOptions;
 }
 
@@ -125,8 +142,17 @@ export interface BeforeArgs {
  * @since 0.1.0
  */
 export interface BeforeResult {
+  /** The input to go on with; it must keep the method of the call. */
   readonly input: ClientCallInput;
+  /**
+   * The options to go on with. They replace the options in full and are not
+   * normalized again.
+   */
   readonly options: CallOptions;
+  /**
+   * A result that answers the call. The transport and the later `before`
+   * hooks are skipped; only the interceptors that ran get `after`.
+   */
   readonly earlyReturn?: ClientCallResult;
 }
 
@@ -136,8 +162,11 @@ export interface BeforeResult {
  * @since 0.1.0
  */
 export interface AfterArgs {
+  /** The result, as changed by the interceptors that ran before. */
   readonly result: ClientCallResult;
+  /** The card that the `before` hooks saw. */
   readonly agentCard: AgentCard;
+  /** The options that the call was sent with. */
   readonly options: CallOptions;
 }
 
@@ -148,7 +177,12 @@ export interface AfterArgs {
  * @since 0.1.0
  */
 export interface AfterResult {
+  /** The result to go on with; it must keep the method of the call. */
   readonly result: ClientCallResult;
+  /**
+   * `true` skips the remaining `after` hooks. On a stream, it also ends the
+   * stream after this event.
+   */
   readonly earlyReturn?: boolean;
 }
 
@@ -160,8 +194,12 @@ export interface AfterResult {
  * @since 0.1.0
  */
 export interface CallInterceptor {
+  /** Runs before the transport call, in the order of the interceptors. */
   readonly before: (
     args: BeforeArgs
   ) => Effect.Effect<BeforeResult, ClientError>;
+  /**
+   * Runs after the call in reverse order; on a stream, once for each event.
+   */
   readonly after: (args: AfterArgs) => Effect.Effect<AfterResult, ClientError>;
 }

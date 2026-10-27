@@ -71,6 +71,11 @@ export interface ClientConfig {
  * @since 0.1.0
  */
 export interface Client {
+  /**
+   * The transport that the factory selected, tenant decorator included. A
+   * call made on it directly skips the interceptors, the header
+   * normalization and the client configuration.
+   */
   readonly transport: Transport;
   /** The protocol version sent in `A2A-Version` with every call. */
   readonly protocolVersion: string;
@@ -97,30 +102,49 @@ export interface Client {
     params: SendMessageRequest,
     options?: CallOptions
   ) => Stream.Stream<StreamResponse, ClientError>;
+  /**
+   * Registers a push notification config. Fails with
+   * `PushNotificationNotSupportedError` when the card lacks the capability.
+   */
   readonly createTaskPushNotificationConfig: (
     params: TaskPushNotificationConfig,
     options?: CallOptions
   ) => Effect.Effect<TaskPushNotificationConfig, ClientError>;
+  /**
+   * Fetches a push notification config. Fails with
+   * `PushNotificationNotSupportedError` when the card lacks the capability.
+   */
   readonly getTaskPushNotificationConfig: (
     params: GetTaskPushNotificationConfigRequest,
     options?: CallOptions
   ) => Effect.Effect<TaskPushNotificationConfig, ClientError>;
+  /**
+   * Lists the push notification configs of a task. Fails with
+   * `PushNotificationNotSupportedError` when the card lacks the capability.
+   */
   readonly listTaskPushNotificationConfig: (
     params: ListTaskPushNotificationConfigsRequest,
     options?: CallOptions
   ) => Effect.Effect<ListTaskPushNotificationConfigsResponse, ClientError>;
+  /**
+   * Deletes a push notification config. Unlike the other push calls, it does
+   * not check the push capability of the card first.
+   */
   readonly deleteTaskPushNotificationConfig: (
     params: DeleteTaskPushNotificationConfigRequest,
     options?: CallOptions
   ) => Effect.Effect<void, ClientError>;
+  /** Fetches a task by id. */
   readonly getTask: (
     params: GetTaskRequest,
     options?: CallOptions
   ) => Effect.Effect<Task, ClientError>;
+  /** Asks the agent to cancel a task; returns the task in its new state. */
   readonly cancelTask: (
     params: CancelTaskRequest,
     options?: CallOptions
   ) => Effect.Effect<Task, ClientError>;
+  /** Lists tasks, one page at a time. */
   readonly listTasks: (
     params: ListTasksRequest,
     options?: CallOptions
@@ -132,7 +156,9 @@ export interface Client {
   ) => Stream.Stream<StreamResponse, ClientError>;
 }
 
+/** The input type of a client method, for the typed call pipeline. */
 type Input<M extends ClientMethod> = ClientMethodTypes[M]['input'];
+/** The result type of a client method; one event for a streaming method. */
 type Output<M extends ClientMethod> = ClientMethodTypes[M]['result'];
 
 /**
@@ -174,6 +200,10 @@ const normalizeHeaders = (
   return { ...options, serviceParameters };
 };
 
+/**
+ * The error when an interceptor returns an input or a result of another
+ * method than the call, which would break the typed result.
+ */
 const mismatch = (method: string) =>
   new A2ATransportError({
     message: `An interceptor changed the method of a ${method} call.`,

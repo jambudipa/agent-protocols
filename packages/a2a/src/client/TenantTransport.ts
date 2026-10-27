@@ -5,6 +5,10 @@
  */
 import type { Transport } from './Transport.js';
 
+/**
+ * Fills `tenant` with `defaultTenant` when it is absent or empty. An empty
+ * string counts as no tenant, so it never overrides the interface's tenant.
+ */
 const withTenant =
   (defaultTenant: string) =>
   <P extends { readonly tenant?: string }>(params: P): P => ({

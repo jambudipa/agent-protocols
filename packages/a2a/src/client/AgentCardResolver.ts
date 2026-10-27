@@ -56,6 +56,10 @@ export interface AgentCardResolver {
  * @since 0.1.0
  */
 export interface AgentCardResolverOptions {
+  /**
+   * The card path to use when `resolve` gets none, relative to the base URL.
+   * The default is `/.well-known/agent-card.json`.
+   */
   readonly path?: string;
   /**
    * Accepts v0.3 cards. Use `parseLegacyAgentCard` of
@@ -64,6 +68,7 @@ export interface AgentCardResolverOptions {
   readonly legacy?: LegacyCardParser;
 }
 
+/** Decodes a v1.0 card; a failure is an `HTTP` transport error. */
 const decodeCard = decodeResponse(AgentCard, 'HTTP');
 
 /**

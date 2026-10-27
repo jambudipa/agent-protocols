@@ -48,8 +48,10 @@ import {
   pickMatchingInterface,
 } from './Transport.js';
 
+/** The protocol name in the transport errors of this file. */
 const PROTOCOL = TransportProtocol.HTTP_JSON;
 
+/** Decodes an HTTP+JSON error body; `Option.none()` when it is malformed. */
 const decodeErrorBody = Schema.decodeUnknownOption(RestErrorBody);
 
 /**
@@ -87,11 +89,19 @@ export const fromRestErrorResponse = (
 export interface RestTransportOptions {
   /** The base URL of the routes. A trailing slash is ignored. */
   readonly endpoint: string;
+  /**
+   * The client that sends the requests. Wrap it with `withAuthentication`
+   * to add credentials.
+   */
   readonly httpClient: HttpClient.HttpClient;
   /** The protocol version to announce. The default is `1.0`. */
   readonly protocolVersion?: string;
 }
 
+/**
+ * Prefixes a route with the URL-encoded tenant. An absent or empty tenant
+ * leaves the route unchanged.
+ */
 const tenantPath = (path: string, tenant: string | undefined) =>
   tenant === undefined || tenant === ''
     ? path

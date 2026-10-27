@@ -52,6 +52,7 @@ export class GrpcConversionError extends Schema.TaggedError<GrpcConversionError>
   { message: Schema.String }
 ) {}
 
+/** The text of a thrown value, which protobuf-es may throw as a non-`Error`. */
 const messageOf = (cause: unknown): string =>
   cause instanceof Error ? cause.message : String(cause);
 
@@ -101,6 +102,10 @@ export const fromProto =
       )
     );
 
+/**
+ * Wraps the bytes as a `Buffer` without a copy, as grpc-js serializers must
+ * return one. The result shares memory with `bytes`.
+ */
 const toBuffer = (bytes: Uint8Array): Buffer =>
   Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 

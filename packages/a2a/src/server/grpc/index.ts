@@ -116,9 +116,18 @@ export interface GrpcServiceOptions {
   readonly userBuilder?: GrpcUserBuilder;
 }
 
+/**
+ * Whether a failure is already a server error, so that it keeps its own
+ * gRPC status rather than becoming an `InternalError`.
+ */
 const isServerError = (value: unknown): value is ServerError =>
   isA2AError(value) || Predicate.isTagged(value, 'InternalError');
 
+/**
+ * The server error that a failed call reports. The first failure or defect
+ * of the cause wins; anything that is not a server error becomes an
+ * `InternalError` with its message.
+ */
 const serverErrorOf = (cause: Cause.Cause<unknown>): ServerError => {
   const error = Cause.squash(cause);
   return isServerError(error)
@@ -153,19 +162,30 @@ export const toServiceError = (
   return { code: grpcStatusFor(error), details: error.message, metadata };
 };
 
+/** The text of a metadata value; a binary (`-bin`) value is decoded as UTF-8. */
 const metadataText = (value: grpc.MetadataValue): string =>
   Predicate.isString(value) ? value : value.toString();
 
+/**
+ * The tenant of a decoded request, or `''` (the default tenant) when the
+ * request has no `tenant` field, as some A2A requests do not.
+ */
 const tenantOf = (request: unknown): string =>
   Predicate.hasProperty(request, 'tenant') && Predicate.isString(request.tenant)
     ? request.tenant
     : '';
 
+/** The schema of a value and the protobuf message it converts to on the wire. */
 type MethodSpec<T, E, Desc extends DescMessage> = readonly [
   Schema.Codec<T, E>,
   Desc,
 ];
 
+/**
+ * Builds the grpc-js handlers of every method of `lf.a2a.v1.A2AService`.
+ * Each handler runs its call as an Effect with `services`; a cancelled call
+ * interrupts that Effect, and an interrupted call sends no response.
+ */
 const makeImplementation = (
   handler: A2ARequestHandler['Service'],
   services: Context.Context<never>,
@@ -412,7 +432,9 @@ export const grpcService = (
  * @since 0.1.0
  */
 export interface GrpcServiceRegistration {
+  /** The grpc-js definition of the service, for example from {@link makeServiceDefinition}. */
   readonly definition: grpc.ServiceDefinition;
+  /** The handlers of the service, keyed as in `definition`. */
   readonly implementation: grpc.UntypedServiceImplementation;
 }
 
@@ -449,6 +471,10 @@ export class GrpcServerError extends Schema.TaggedError<GrpcServerError>()(
   }
 ) {}
 
+/**
+ * Stops the server gracefully, and cancels the calls still running after 2
+ * seconds. It never fails, so it is safe as a finaliser.
+ */
 const shutdown = (server: grpc.Server) =>
   Effect.callback<void>((resume) => {
     server.tryShutdown(() => resume(Effect.void));
@@ -459,6 +485,11 @@ const shutdown = (server: grpc.Server) =>
     })
   );
 
+/**
+ * Adds the A2A service and the additional services to a new server, then
+ * binds it. The bind is a scoped resource: closing the scope shuts the
+ * server down.
+ */
 const makeServer = (options: A2AGrpcServerOptions) =>
   Effect.gen(function* () {
     const implementation = yield* grpcService(options);
@@ -517,6 +548,10 @@ export class A2AGrpcServer extends Context.Service<
     readonly port: number;
   }
 >()('@jambudipa/a2a/server/grpc/A2AGrpcServer') {
+  /**
+   * The layer that starts the server. It fails with {@link GrpcServerError}
+   * when the address does not bind.
+   */
   static readonly layer = (
     options: A2AGrpcServerOptions = {}
   ): Layer.Layer<A2AGrpcServer, GrpcServerError, A2ARequestHandler> =>

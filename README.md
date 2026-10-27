@@ -39,13 +39,14 @@ with type declarations, and declares an `exports` map.
 - ESM, `moduleResolution` `NodeNext`, `strict`, TypeScript `~6.0.3`.
 - Tests use `@effect/vitest`.
 
-| Command             | What it does                                                      |
-| ------------------- | ----------------------------------------------------------------- |
-| `npm install`       | Installs the workspace.                                           |
-| `npm run build`     | Builds every package to `dist/`.                                  |
-| `npm run typecheck` | Type-checks the source and the tests of every package.            |
-| `npm test`          | Runs every test once.                                             |
-| `npm run lint`      | Runs ESLint and the Effect language service, and fails on either. |
+| Command              | What it does                                                             |
+| -------------------- | ------------------------------------------------------------------------ |
+| `npm install`        | Installs the workspace.                                                  |
+| `npm run build`      | Builds every package to `dist/`.                                         |
+| `npm run typecheck`  | Type-checks the source and the tests of every package.                   |
+| `npm test`           | Runs every test once.                                                    |
+| `npm run lint`       | Runs ESLint and the Effect language service, and fails on either.        |
+| `npm run docs:audit` | Fails while a declaration lacks JSDoc or a source folder lacks a README. |
 
 ### Lint gate
 
@@ -58,3 +59,26 @@ disable comments, so an exception must live in scoped configuration.
 `npm run lint` also runs `effect-language-service diagnostics --strict` over
 `tsconfig.json`, the project that includes the tests. Run
 `npm run lint:effect:all` to see the suggestion-level diagnostics too.
+
+<!-- docs-audit:maintenance -->
+
+## Keeping the documentation current
+
+This repository documents itself under three rules, and `npm run docs:audit` proves all three.
+CI runs the same command, so a change that breaks a rule fails the build.
+
+1. **Every declaration carries a JSDoc block** — exported, public, private, or internal alike.
+   Say why the thing exists and what a caller must know. Do not restate the signature.
+2. **Every folder that holds source files carries a `README.md`** describing what the folder is
+   for. One file, not two: every agent and every reader opens the same text.
+3. **This block stays in the root `README.md`.** The root `AGENTS.md` and `CLAUDE.md` point at
+   that file rather than repeating it.
+
+When you change the code:
+
+- Write or update the JSDoc block in the same commit as the declaration it describes. A stale
+  block is worse than no block, because a reader trusts it.
+- Update the folder's `README.md` when you change what the folder is for, add a new entry point,
+  or move code in or out of it.
+- Add a `README.md` when you add a folder.
+- Run `npm run docs:audit` before you commit.

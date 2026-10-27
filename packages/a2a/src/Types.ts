@@ -95,6 +95,10 @@ export type Role = typeof Role.Type;
 // Parts, messages and artifacts
 // ---------------------------------------------------------------------------
 
+/**
+ * The fields that every part kind carries beside its content, spread into each
+ * part schema so that the four kinds stay in step.
+ */
 const PartFields = {
   metadata: optionalStruct,
   filename: optionalString,

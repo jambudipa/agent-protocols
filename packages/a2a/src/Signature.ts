@@ -68,17 +68,29 @@ export type AgentCardSignatureVerifier<E = never, R = never> = (
   agentCard: AgentCard
 ) => Effect.Effect<void, AgentCardSignatureError | E, R>;
 
+/**
+ * Imports `jose` on demand, so that only callers that sign or verify pay for
+ * it. A failed import becomes an `AgentCardSignatureError`.
+ */
 const loadJose = Effect.tryPromise({
   try: () => import('jose'),
   catch: (cause) =>
     new AgentCardSignatureError({ message: 'Cannot load jose.', cause }),
 });
 
+/**
+ * Encodes a card to its wire JSON before canonicalization. It throws when the
+ * card does not satisfy the `AgentCard` schema.
+ */
 const encodeCard = Schema.encodeSync(AgentCard);
 
+/** Any JSON value, as the encoded card and its parts are typed. */
 type JsonValue = Schema.Json;
+
+/** A JSON object, the only shape whose members `cleanEmpty` filters. */
 type JsonRecord = { readonly [key: string]: JsonValue };
 
+/** Tells a JSON object apart from an array, which is also an `object`. */
 const isRecord = (value: JsonValue): value is JsonRecord =>
   Predicate.isObject(value) && !Array.isArray(value);
 
@@ -171,6 +183,7 @@ export const canonicalizeAgentCard = (agentCard: AgentCard): string => {
   });
 };
 
+/** UTF-8 encodes the canonical card, the form that `jose` signs over. */
 const toBytes = (text: string) => new TextEncoder().encode(text);
 
 /**
@@ -268,6 +281,11 @@ export const verifyAgentCardSignature =
       });
     });
 
+/**
+ * Verifies one signature entry against the canonical payload. It succeeds
+ * with `false` on any failure, including a failure of `retrievePublicKey`, so
+ * that the caller can try the next entry; the failure is logged at debug level.
+ */
 const verifyOne = <E, R>(
   jose: typeof Jose,
   payload: string,

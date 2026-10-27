@@ -35,6 +35,7 @@ export const DEFAULT_MAX_SSE_EVENT_SIZE_BYTES = 4 * 1024 * 1024;
 export interface SseEvent {
   /** The `event:` name; `message` when the event names none. */
   readonly type: string;
+  /** The `data:` lines joined by newlines, still unparsed text. */
   readonly data: string;
 }
 

@@ -5,7 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     // Claude Code worktrees live under `.claude/worktrees/`; their tests are not this checkout's.
-    exclude: [...configDefaults.exclude, '.claude/**'],
+    // The vendored docs gate test uses `node:test`, so CI runs it with `node --test` instead.
+    exclude: [...configDefaults.exclude, '.claude/**', 'scripts/**'],
     coverage: {
       reporter: ['text', 'html', 'lcov'],
       exclude: [

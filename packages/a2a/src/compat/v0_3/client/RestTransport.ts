@@ -52,13 +52,27 @@ import {
   toCoreTaskPushNotificationConfig,
 } from '../translate.js';
 
+/** The protocol every error of this transport names, so callers can tell which binding failed. */
 const PROTOCOL = TransportProtocol.HTTP_JSON;
 
+/**
+ * Decodes the v0.3 error body that an agent sends on a failed response or an
+ * SSE `error` event; `None` means the body is not that shape.
+ */
 const decodeErrorBody = Schema.decodeUnknownOption(LegacyErrorBody);
 
+/**
+ * Maps a failure to translate a v0.3 reply into the v1.0 model to a transport
+ * error, so a malformed agent reply surfaces as `A2ATransportError`.
+ */
 const invalidResponse = (error: { readonly message: string }) =>
   transportError(PROTOCOL, `Invalid response: ${error.message}`);
 
+/**
+ * Turns a non-2xx response into the A2A error its v0.3 error body names. A body
+ * that is not a v0.3 error body becomes a transport error that carries the HTTP
+ * status as its code.
+ */
 const errorOf = (status: number, text: string, path: string): ClientError =>
   Option.match(Option.flatMap(parseJsonOption(text), decodeErrorBody), {
     onNone: () =>
@@ -76,7 +90,12 @@ const errorOf = (status: number, text: string, path: string): ClientError =>
  * @since 0.1.0
  */
 export interface LegacyRestTransportOptions {
+  /**
+   * The base URL that the `/v1/...` routes are appended to. The transport
+   * strips trailing slashes.
+   */
   readonly endpoint: string;
+  /** The client that sends every request; its middleware applies to each call. */
   readonly httpClient: HttpClient.HttpClient;
 }
 

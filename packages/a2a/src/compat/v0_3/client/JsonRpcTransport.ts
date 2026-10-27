@@ -56,16 +56,30 @@ import {
 } from '../translate.js';
 import * as V03 from '../Types.js';
 
+/** The protocol every error of this transport names, so callers can tell which binding failed. */
 const PROTOCOL = TransportProtocol.JSONRPC;
 
+/** A JSON-RPC response envelope before its `result` or `error` member is read. */
 type Envelope = { readonly [key: string]: Schema.Json };
 
+/**
+ * Guards a parsed body as a JSON object; an array or a scalar is not a valid
+ * JSON-RPC envelope and the caller reports it as an invalid response.
+ */
 const isEnvelope = (value: Schema.Json): value is Envelope =>
   Predicate.isObject(value) && !Array.isArray(value);
 
+/**
+ * Maps a failure to translate a v0.3 result into the v1.0 model to a transport
+ * error, so a malformed agent reply surfaces as `A2ATransportError`.
+ */
 const invalidResponse = (error: { readonly message: string }) =>
   transportError(PROTOCOL, `Invalid response: ${error.message}`);
 
+/**
+ * The `result` of the v0.3 list-push-notification-configs method, which is a
+ * bare array rather than the v1.0 response object.
+ */
 const TaskPushNotificationConfigs = Schema.Array(
   V03.TaskPushNotificationConfig
 ).annotate({ identifier: 'V03TaskPushNotificationConfigs' });
@@ -76,7 +90,9 @@ const TaskPushNotificationConfigs = Schema.Array(
  * @since 0.1.0
  */
 export interface LegacyJsonRpcTransportOptions {
+  /** The URL of the v0.3 JSON-RPC endpoint; every request is a POST to it. */
   readonly endpoint: string;
+  /** The client that sends every request; its middleware applies to each call. */
   readonly httpClient: HttpClient.HttpClient;
 }
 

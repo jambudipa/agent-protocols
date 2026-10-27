@@ -26,6 +26,11 @@ export const A2A_ERROR_DOMAIN = 'a2a-protocol.org';
  */
 export const ERROR_INFO_TYPE = 'type.googleapis.com/google.rpc.ErrorInfo';
 
+/**
+ * The fields that every A2A error shares, so that each class differs only in
+ * its tag and its default message. The default applies when the constructor
+ * receives no `message`; a decoded error always carries one.
+ */
 const errorFields = (defaultMessage: string) => ({
   message: Schema.String.pipe(
     Schema.withConstructorDefault(Effect.succeed(defaultMessage))
@@ -200,6 +205,11 @@ export class InternalError extends Schema.TaggedError<InternalError>()(
  */
 export type ServerError = A2AError | InternalError;
 
+/**
+ * The tags of the `A2AError` union, for the runtime check in `isA2AError`.
+ * The compiler does not tie this list to the union, so a new error class must
+ * be added here by hand.
+ */
 const A2AErrorTags: ReadonlyArray<string> = [
   'TaskNotFoundError',
   'TaskNotCancelableError',
@@ -299,12 +309,17 @@ export const REST_STATUS_NAME = {
  * @since 0.1.0
  */
 export interface A2AErrorSpec {
+  /** The `_tag` of the error class, and the key of this spec in `A2A_ERROR_SPECS`. */
   readonly name: A2AErrorName;
   /** The `ErrorInfo.reason`, UPPER_SNAKE_CASE. */
   readonly reason: string;
+  /** The message that the error class uses when it receives none. */
   readonly defaultMessage: string;
+  /** The JSON-RPC `error.code`, one of `A2A_ERROR_CODE`. */
   readonly jsonRpcCode: number;
+  /** The HTTP status of the HTTP+JSON binding, one of `HTTP_STATUS`. */
   readonly httpStatus: number;
+  /** The `google.rpc.Code` name in the HTTP+JSON error body, one of `REST_STATUS_NAME`. */
   readonly restStatus: string;
 }
 
@@ -396,6 +411,7 @@ export const A2A_ERROR_SPECS: { readonly [K in A2AErrorName]: A2AErrorSpec } = {
   },
 };
 
+/** The specs as a list, for the lookups by reason and by JSON-RPC code. */
 const specList: ReadonlyArray<A2AErrorSpec> = Object.values(A2A_ERROR_SPECS);
 
 /**
@@ -496,6 +512,10 @@ export const toErrorInfo = (error: A2AError): ErrorInfo => {
     : base;
 };
 
+/**
+ * Decodes one untrusted error detail. It returns `Option.none()` for a detail
+ * that is not an `ErrorInfo`, so that the search moves on to the next one.
+ */
 const decodeErrorInfo = Schema.decodeUnknownOption(ErrorInfo);
 
 /**

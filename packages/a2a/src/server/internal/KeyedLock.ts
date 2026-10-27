@@ -5,8 +5,11 @@
  */
 import { Effect, MutableHashMap, Option, Semaphore } from 'effect';
 
+/** The lock of one key and the count of the fibers that hold or wait for it. */
 interface Entry {
+  /** A single permit, so that one fiber at a time holds the key. */
   readonly semaphore: Semaphore.Semaphore;
+  /** The fibers that hold or wait for the key; the entry is removed at 0. */
   users: number;
 }
 
@@ -16,6 +19,10 @@ interface Entry {
  * @internal
  */
 export interface KeyedLock {
+  /**
+   * Runs the effect once no other effect holds `key`. Waiters run in the
+   * order of the semaphore; the lock is released on interruption too.
+   */
   readonly withLock: (
     key: string
   ) => <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>;

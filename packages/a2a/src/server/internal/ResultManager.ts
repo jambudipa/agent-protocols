@@ -29,20 +29,35 @@ import { isTerminal } from './utils.js';
 
 /** @internal */
 export interface ResultManager {
+  /**
+   * Applies one execution event: a message becomes the final result, and a
+   * task or an update is merged into the stored task and saved. An update
+   * for an unknown task, or one that would leave a terminal state, is
+   * logged and not saved.
+   */
   readonly processEvent: (
     event: AgentExecutionEvent
   ) => Effect.Effect<void, TaskStoreError>;
   /** The final message, else the current task. */
   readonly finalResult: Effect.Effect<Option.Option<SendMessageResult>>;
+  /** The task as last loaded or saved by this manager; none before the first task event. */
   readonly currentTask: Effect.Effect<Option.Option<Task>>;
 }
 
+/** The mutable state of one manager, held in a `Ref`. */
 interface State {
+  /** The task as last loaded or saved. */
   readonly currentTask: Option.Option<Task>;
+  /** The message event of the executor, which ends the request with a message result. */
   readonly finalMessage: Option.Option<Message>;
+  /** The task of the previous event, to warn when an executor switches tasks mid-stream. */
   readonly lastSeenTaskId: Option.Option<string>;
 }
 
+/**
+ * Merges two metadata records; keys of `update` win. It stays `undefined`
+ * when both are absent, so that a merged task gains no empty metadata.
+ */
 const mergeMetadata = (
   base: Task['metadata'],
   update: Task['metadata']

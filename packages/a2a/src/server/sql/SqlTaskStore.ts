@@ -67,7 +67,9 @@ const BigIntNumber = Schema.Union([
 /** A text column. */
 const TextColumn = Schema.String;
 
+/** A nullable text column; `Option.none` is written as SQL null. */
 const nullable = Schema.OptionFromNullOr(Schema.String);
+/** A text column that may be null or missing from the select. */
 const nullableKey = Schema.OptionFromOptionalNullOr(Schema.String);
 
 /**
@@ -105,18 +107,27 @@ const TaskRowRead = Schema.Struct({
   metadata: nullableKey,
 }).annotate({ identifier: 'TaskRowRead' });
 
+/** The decoded form of a task row as the store reads it. */
 type TaskRowRead = typeof TaskRowRead.Type;
 
+/** The JSON text of the `status` column. */
 const StatusJson = Schema.fromJsonString(TaskStatus);
+/** The JSON text of the `artifacts` column. */
 const ArtifactsJson = Schema.fromJsonString(Schema.Array(Artifact));
+/** The JSON text of the `history` column. */
 const HistoryJson = Schema.fromJsonString(Schema.Array(Message));
+/** The JSON text of the `metadata` column. */
 const MetadataJson = Schema.fromJsonString(Schema.JsonObject);
 
+/** Encodes a task row for an upsert. */
 const encodeRow = Schema.encodeEffect(TaskRowWrite);
+/** Decodes the rows of a select. Driver rows are untrusted until decoded. */
 const decodeRows = Schema.decodeUnknownEffect(Schema.Array(TaskRowRead));
+/** The row of the count query of `list`. */
 const Count = Schema.Struct({ total: BigIntNumber }).annotate({
   identifier: 'Count',
 });
+/** Decodes the result of the count query. */
 const decodeCount = Schema.decodeUnknownEffect(Schema.Array(Count));
 
 /**
@@ -142,6 +153,10 @@ export const statusLastUpdated = (timestamp: string | undefined): number =>
 export const cursorTimestamp = (millis: number): string =>
   millis === 0 ? '' : DateTime.formatIso(DateTime.makeUnsafe(millis));
 
+/**
+ * Encodes an optional field to JSON text. An absent field becomes SQL null,
+ * so an update clears the column.
+ */
 const encodeOptional = <A>(
   schema: Schema.Codec<A, string>,
   value: A | undefined
@@ -150,6 +165,10 @@ const encodeOptional = <A>(
     ? Effect.succeed(Option.none())
     : Effect.map(Schema.encodeEffect(schema)(value), Option.some);
 
+/**
+ * Builds the row of a task in the caller's scope. A task without a
+ * `contextId` stores an empty string, because the column is not nullable.
+ */
 const toRow = (scope: CallerScope, task: Task) =>
   Effect.gen(function* () {
     return yield* encodeRow({
@@ -167,6 +186,10 @@ const toRow = (scope: CallerScope, task: Task) =>
     });
   });
 
+/**
+ * Decodes a JSON column. Null, a column left out of the select and an empty
+ * string all read as absent.
+ */
 const decodeOptional = <A>(
   schema: Schema.Codec<A, string>,
   value: Option.Option<string>
@@ -221,6 +244,10 @@ export interface SqlTaskStoreOptions {
   readonly tableName?: string;
 }
 
+/**
+ * Every column of the task table, in select order. `list` drops
+ * `artifacts` and `history` when the request does not want them.
+ */
 const TASK_COLUMNS = [
   'tenant',
   'owner',
@@ -235,11 +262,23 @@ const TASK_COLUMNS = [
   'protocol_version',
 ] as const;
 
+/**
+ * Wraps a failure in a `TaskStoreError` whose message starts with the
+ * operation that failed.
+ */
 const storeError =
   (message: string) =>
   (cause: { readonly message: string }): TaskStoreError =>
     new TaskStoreError({ message: `${message}: ${cause.message}`, cause });
 
+/**
+ * Builds the store on the current `SqlClient`. It fails with
+ * `UnsupportedDialectError` for a dialect other than PostgreSQL, MySQL or
+ * SQLite. Every query is limited to the caller's tenant and owner. `list`
+ * orders by `status_last_updated` then `id`, both descending, and pages with
+ * a keyset cursor on that pair. A row that cannot be decoded is logged and
+ * skipped.
+ */
 const makeSqlTaskStore = (options: SqlTaskStoreOptions = {}) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;

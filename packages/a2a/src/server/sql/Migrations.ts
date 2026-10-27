@@ -102,8 +102,13 @@ export class MigrationError extends Schema.TaggedError<MigrationError>()(
  * @since 0.1.0
  */
 export interface Migration {
+  /**
+   * The name in the ledger. Migrations run in the sort order of their names.
+   */
   readonly name: string;
+  /** The statements that apply the migration, without trailing semicolons. */
   readonly up: (dialect: SqlDialect) => ReadonlyArray<string>;
+  /** The statements that revert the migration, without trailing semicolons. */
   readonly down: (dialect: SqlDialect) => ReadonlyArray<string>;
 }
 
@@ -113,7 +118,9 @@ export interface Migration {
  * @since 0.1.0
  */
 export interface StoreMigrations {
+  /** The id that `a2a-db --store` takes. */
   readonly id: StoreId;
+  /** The store table, after any custom name. */
   readonly tableName: string;
   /** The ledger table: one row for each applied migration. */
   readonly ledgerTable: string;
@@ -121,6 +128,11 @@ export interface StoreMigrations {
   readonly migrations: ReadonlyArray<Migration>;
 }
 
+/**
+ * 63, the PostgreSQL identifier limit, less the 26 characters of
+ * `_scope_context_updated_idx`, the longest name that a migration derives
+ * from the table name.
+ */
 const MAX_TABLE_NAME_LENGTH = 37;
 
 /**
@@ -139,6 +151,7 @@ export const ledgerTableFor = (
       )
     : Effect.succeed(`a2a_${tableName}_migrations`);
 
+/** The revert of a migration that creates a table. */
 const dropTable = (dialect: SqlDialect, tableName: string) => [
   `drop table if exists ${quoteIdentifier(dialect, tableName)}`,
 ];
@@ -232,11 +245,19 @@ export const migrationNames = (store: StoreMigrations): ReadonlyArray<string> =>
 // Ledger statements
 // ---------------------------------------------------------------------------
 
+/**
+ * Creates the ledger of a store when it is absent. The columns are those of
+ * Kysely's migration table, so each tool reads the other's ledger.
+ */
 const createLedger = (dialect: SqlDialect, store: StoreMigrations) => {
   const q = (name: string) => quoteIdentifier(dialect, name);
   return `create table if not exists ${q(store.ledgerTable)} (${q('name')} varchar(255) not null primary key, ${q('timestamp')} varchar(255) not null)`;
 };
 
+/**
+ * Records an applied migration. The values are inlined as literals because
+ * the offline script carries the same text.
+ */
 const insertLedgerRow = (
   dialect: SqlDialect,
   store: StoreMigrations,
@@ -247,6 +268,7 @@ const insertLedgerRow = (
   return `insert into ${q(store.ledgerTable)} (${q('name')}, ${q('timestamp')}) values (${stringLiteral(dialect, name)}, ${stringLiteral(dialect, timestamp)})`;
 };
 
+/** Removes the ledger row of a reverted migration. */
 const deleteLedgerRow = (
   dialect: SqlDialect,
   store: StoreMigrations,
@@ -256,6 +278,7 @@ const deleteLedgerRow = (
   return `delete from ${q(store.ledgerTable)} where ${q('name')} = ${stringLiteral(dialect, name)}`;
 };
 
+/** The current time in the ISO form that a ledger row records. */
 const nowIso = Effect.map(DateTime.now, DateTime.formatIso);
 
 // ---------------------------------------------------------------------------
@@ -269,6 +292,10 @@ const nowIso = Effect.map(DateTime.now, DateTime.formatIso);
  */
 export type Direction = 'up' | 'down';
 
+/**
+ * The index of a revision among the sorted migration names: -1 for `base`,
+ * the last index for `latest`. It fails for an unknown name.
+ */
 const positionOf = (
   names: ReadonlyArray<string>,
   point: string
@@ -285,6 +312,10 @@ const positionOf = (
     : Effect.succeed(at);
 };
 
+/**
+ * The migrations between two revisions, in run order, and the direction
+ * that reaches `to`. No `to` means one migration down from `from`.
+ */
 const span = (
   store: StoreMigrations,
   from: string,
@@ -304,6 +335,7 @@ const span = (
         };
   });
 
+/** The migration of a store with a given name. It fails when there is none. */
 const migrationNamed = (store: StoreMigrations, name: string) =>
   Option.match(
     Arr.findFirst(store.migrations, (migration) => migration.name === name),
@@ -316,8 +348,17 @@ const migrationNamed = (store: StoreMigrations, name: string) =>
     }
   );
 
+/**
+ * How a script header or an error names the destination of a downgrade
+ * that has no target.
+ */
 const PREVIOUS = 'the previous migration';
 
+/**
+ * The statements of one store for a run, each ending in a semicolon. An
+ * upgrade from `base` creates the ledger first. It fails when the span
+ * moves against `expected`.
+ */
 const storeStatements = (
   dialect: SqlDialect,
   store: StoreMigrations,
@@ -356,12 +397,18 @@ const storeStatements = (
  * @since 0.1.0
  */
 export interface RenderOptions {
+  /** The dialect whose quoting and column types the script uses. */
   readonly dialect: SqlDialect;
+  /** The stores to render, in output order. */
   readonly stores: ReadonlyArray<StoreMigrations>;
   /** The revision that the database is at. */
   readonly from: string;
   /** The revision to reach; none reverts one migration. */
   readonly to: Option.Option<string>;
+  /**
+   * Whether the caller asked for an upgrade or a downgrade. A span that moves
+   * the other way fails.
+   */
   readonly direction: Direction;
 }
 
@@ -420,25 +467,47 @@ export const renderMigrationScript = (
  * @since 0.1.0
  */
 export interface MigrationState {
+  /** The name of the migration. */
   readonly name: string;
   /** The RFC 3339 time at which it was applied, when it was. */
   readonly executedAt: Option.Option<string>;
 }
 
+/** A row of a store's ledger table. */
 const LedgerRow = Schema.Struct({
   name: Schema.String,
   timestamp: Schema.String,
 }).annotate({ identifier: 'LedgerRow' });
 
+/** Decodes the rows of a ledger select. */
 const decodeLedger = Schema.decodeUnknownEffect(Schema.Array(LedgerRow));
 
+/**
+ * The id of the single row of the lock table, as Kysely's migrator writes
+ * it.
+ */
 const MIGRATION_LOCK_ID = 'migration_lock';
 
-/** The advisory lock ids of Kysely's PostgreSQL and MySQL adapters. */
+/**
+ * The advisory lock id of Kysely's PostgreSQL adapter, so that both tools
+ * exclude each other.
+ */
 const PG_LOCK_ID = '3853314791062309107';
+/**
+ * The `get_lock` name of Kysely's MySQL adapter, so that both tools
+ * exclude each other.
+ */
 const MYSQL_LOCK_ID = 'ea586330-2c93-47c8-908d-981d9d270f9d';
+/**
+ * How long MySQL `get_lock` waits for another migrator: one hour, as in
+ * Kysely.
+ */
 const LOCK_TIMEOUT_SECONDS = 60 * 60;
 
+/**
+ * Wraps a SQL or decode failure in a `MigrationError` whose message starts
+ * with what was being done.
+ */
 const toMigrationError =
   (message: string) =>
   (cause: SqlError.SqlError | Schema.SchemaError): MigrationError =>
@@ -502,6 +571,7 @@ const withMigrationLock = <A, E>(
  * @since 0.1.0
  */
 export interface StoreMigrator {
+  /** The migrations that this migrator runs. */
   readonly store: StoreMigrations;
   /** The state of every migration of the store. */
   readonly status: Effect.Effect<ReadonlyArray<MigrationState>, MigrationError>;

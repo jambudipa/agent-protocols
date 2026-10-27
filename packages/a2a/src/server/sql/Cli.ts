@@ -60,14 +60,23 @@ export class A2aDbError extends Schema.TaggedError<A2aDbError>()('A2aDbError', {
   message: Schema.String,
 }) {}
 
+/** Fails a command with the message that it prints on standard error. */
 const fail = (message: string) => Effect.fail(new A2aDbError({ message }));
 
 // ---------------------------------------------------------------------------
 // Connection
 // ---------------------------------------------------------------------------
 
+/**
+ * The URL schemes that `connect` accepts; `postgres` and `postgresql` are
+ * aliases.
+ */
 type Scheme = 'postgres' | 'postgresql' | 'mysql' | 'sqlite';
 
+/**
+ * The driver package of each scheme. It is also the list of accepted
+ * schemes, and the install hint when a driver fails to load.
+ */
 const DRIVERS: { readonly [S in Scheme]: string } = {
   postgres: '@effect/sql-pg',
   postgresql: '@effect/sql-pg',
@@ -75,8 +84,13 @@ const DRIVERS: { readonly [S in Scheme]: string } = {
   sqlite: '@effect/sql-sqlite-node',
 };
 
+/** Narrows a lower-cased URL scheme to one that has a driver. */
 const isScheme = (value: string): value is Scheme => value in DRIVERS;
 
+/**
+ * The lower-cased scheme of a database URL. It fails, with the reference
+ * CLI's message, when the scheme is missing or has no driver.
+ */
 const schemeOf = (url: string): Effect.Effect<Scheme, A2aDbError> => {
   const colon = url.indexOf(':');
   if (colon <= 0) {
@@ -92,6 +106,10 @@ const schemeOf = (url: string): Effect.Effect<Scheme, A2aDbError> => {
       );
 };
 
+/**
+ * The file of a `sqlite:` URL. A leading `//` is dropped, so `sqlite:./a.db`
+ * and `sqlite://./a.db` name the same file. It fails when no file is named.
+ */
 const filePath = (url: string): Effect.Effect<string, A2aDbError> => {
   const path = url.slice(url.indexOf(':') + 1).replace(/^\/\//, '');
   return path === ''
@@ -101,6 +119,11 @@ const filePath = (url: string): Effect.Effect<string, A2aDbError> => {
     : Effect.succeed(path);
 };
 
+/**
+ * Imports a driver package only when a command connects, so `a2a-db` needs
+ * only the driver of the database it uses. A failed import becomes an
+ * install hint.
+ */
 const loadDriver = <A>(
   scheme: Scheme,
   load: () => Promise<A>
@@ -167,8 +190,16 @@ export const connect = (
 // Argument checks
 // ---------------------------------------------------------------------------
 
+/**
+ * The flag that overrides the table name of a store, such as
+ * `--tasks-table-name`. Error messages name the flag through it too.
+ */
 const tableNameFlag = (storeId: string) => `${storeId}-table-name`;
 
+/**
+ * The dialect that `--sql` renders for: `--dialect` is required with
+ * `--sql` and must be one of {@link SQL_DIALECTS}.
+ */
 const resolveDialect = (
   requested: Option.Option<string>
 ): Effect.Effect<SqlDialect, A2aDbError> =>
@@ -185,6 +216,11 @@ const resolveDialect = (
     },
   });
 
+/**
+ * Accepts a revision that is one of the `accepted` keywords or a migration
+ * name. A migration name belongs to one store's history, so it is accepted
+ * only when exactly one store is selected.
+ */
 const checkRevision = (
   revision: string,
   stores: ReadonlyArray<StoreMigrations>,
@@ -206,6 +242,10 @@ const checkRevision = (
       );
 };
 
+/**
+ * Rejects a `--from` that names where the run ends: `latest` for an
+ * upgrade, `base` for a downgrade.
+ */
 const checkStart = (
   direction: 'up' | 'down',
   from: string
@@ -224,6 +264,10 @@ const checkStart = (
     : Effect.void;
 };
 
+/**
+ * Checks the `<to>` of a downgrade: `base` or a migration name, never
+ * `latest`.
+ */
 const checkDestination = (
   target: string,
   stores: ReadonlyArray<StoreMigrations>
@@ -244,17 +288,32 @@ const checkDestination = (
  * @since 0.1.0
  */
 export interface CommonOptions {
+  /** `--url`, else `DATABASE_URL`. Required unless `sql` is set. */
   readonly url: Option.Option<string>;
+  /** The store ids to act on; empty selects every store. */
   readonly store: ReadonlyArray<string>;
+  /** A custom name for the task table. Must not be empty. */
   readonly tasksTableName: Option.Option<string>;
+  /**
+   * A custom name for the push notification config table. Must not be empty.
+   */
   readonly pushNotificationConfigsTableName: Option.Option<string>;
+  /** Print the SQL script instead of connecting to `url`. */
   readonly sql: boolean;
+  /** The dialect of the script. Required with `sql`, rejected without it. */
   readonly dialect: Option.Option<string>;
+  /** The revision the database is assumed to be at. Only valid with `sql`. */
   readonly from: Option.Option<string>;
 }
 
+/** The subcommands of `a2a-db`. */
 type CommandName = 'status' | 'upgrade' | 'downgrade';
 
+/**
+ * The migrations of the stores that `--store` selects, with the table name
+ * overrides applied. It rejects unknown store ids and empty table names
+ * before any other check.
+ */
 const selectStores = (
   options: CommonOptions
 ): Effect.Effect<ReadonlyArray<StoreMigrations>, A2aDbError> =>
@@ -293,6 +352,10 @@ const selectStores = (
       : all.filter((store) => options.store.includes(store.id));
   });
 
+/**
+ * Prints the SQL script of an upgrade or a downgrade without a database.
+ * It rejects `status`, which needs a ledger to read.
+ */
 const runOffline = (
   command: CommandName,
   options: CommonOptions,
@@ -326,6 +389,11 @@ const runOffline = (
     yield* Console.log(script);
   });
 
+/**
+ * Runs a command against the connected database, one store at a time. Each
+ * store takes the migration lock on its own, so a failure leaves the stores
+ * before it migrated.
+ */
 const runOnline = (
   command: CommandName,
   stores: ReadonlyArray<StoreMigrations>,
@@ -415,6 +483,10 @@ export const runCommand = (
     );
   }).pipe(Effect.tapError((error) => Console.error(error.message)));
 
+/**
+ * The flags of every subcommand. Their names and help texts follow the
+ * reference CLI.
+ */
 const commonFlags = {
   url: Flag.String('url').pipe(
     Flag.withDescription(
@@ -461,10 +533,17 @@ const commonFlags = {
   ),
 };
 
+/**
+ * `a2a-db status`: lists each migration of each store as pending or applied.
+ */
 const status = Command.make('status', commonFlags, (options) =>
   runCommand('status', options)
 ).pipe(Command.withDescription('Show migration status for each store.'));
 
+/**
+ * `a2a-db upgrade`: it takes no target, so it always ends at the latest
+ * migration.
+ */
 const upgrade = Command.make('upgrade', commonFlags, (options) =>
   runCommand('upgrade', options)
 ).pipe(
@@ -473,6 +552,10 @@ const upgrade = Command.make('upgrade', commonFlags, (options) =>
   )
 );
 
+/**
+ * `a2a-db downgrade [<to>]`: without `<to>`, it reverts only the last
+ * migration of each selected store.
+ */
 const downgrade = Command.make(
   'downgrade',
   {

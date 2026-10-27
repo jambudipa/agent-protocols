@@ -38,6 +38,10 @@ import { PAYLOAD_FORMAT } from './SqlTaskStore.js';
 /** A text column. */
 const TextColumn = Schema.String;
 
+/**
+ * A row of the push notification config table, in the format that
+ * `DatabasePushNotificationStore` reads and writes.
+ */
 const PushRow = Schema.Struct({
   tenant: TextColumn,
   owner: TextColumn,
@@ -47,9 +51,12 @@ const PushRow = Schema.Struct({
   protocol_version: Schema.OptionFromNullOr(Schema.String),
 }).annotate({ identifier: 'PushRow' });
 
+/** The decoded form of a push notification config row. */
 type PushRow = typeof PushRow.Type;
 
+/** Encodes a row for an upsert; `Option.none` becomes SQL null. */
 const encodeRow = Schema.encodeEffect(PushRow);
+/** Decodes the rows of a select. Driver rows are untrusted until decoded. */
 const decodeRows = Schema.decodeUnknownEffect(Schema.Array(PushRow));
 
 /**
@@ -57,9 +64,22 @@ const decodeRows = Schema.decodeUnknownEffect(Schema.Array(PushRow));
  * own columns, plus the wire version under which it was saved.
  */
 const ConfigData = Schema.fromJsonString(Schema.JsonObject);
+/**
+ * Encodes a config to its JSON form, before the key fields move to their
+ * own columns.
+ */
 const encodeConfig = Schema.encodeEffect(TaskPushNotificationConfig);
+/**
+ * Decodes a config that `fromRow` rebuilt from `config_data` and the key
+ * columns.
+ */
 const decodeConfig = Schema.decodeUnknownEffect(TaskPushNotificationConfig);
 
+/**
+ * Builds the row of a config. The key columns hold `tenant`, `id` and
+ * `taskId`, so the JSON leaves them out; it carries the wire version
+ * instead.
+ */
 const toRow = (
   scope: {
     readonly tenant: string;
@@ -88,6 +108,11 @@ const toRow = (
     });
   });
 
+/**
+ * Rebuilds a config from its row. A null or empty `config_data` reads as an
+ * empty config, an empty tenant as no tenant, and a missing wire version as
+ * the legacy protocol version, as rows of the reference SDK have none.
+ */
 const fromRow = (
   row: PushRow
 ): Effect.Effect<StoredPushNotificationConfig, Schema.SchemaError> =>
@@ -126,6 +151,10 @@ export interface SqlPushNotificationStoreOptions {
   readonly tableName?: string;
 }
 
+/**
+ * Wraps a failure in a `PushNotificationStoreError` whose message starts
+ * with the operation that failed.
+ */
 const storeError =
   (message: string) =>
   (cause: { readonly message: string }): PushNotificationStoreError =>
@@ -134,6 +163,12 @@ const storeError =
       cause,
     });
 
+/**
+ * Builds the store on the current `SqlClient`. It fails with
+ * `UnsupportedDialectError` for a dialect other than PostgreSQL, MySQL or
+ * SQLite. Every query is limited to the caller's tenant and owner, `save`
+ * upserts, and a row that cannot be decoded is logged and skipped.
+ */
 const makeSqlPushNotificationStore = (
   options: SqlPushNotificationStoreOptions = {}
 ) =>

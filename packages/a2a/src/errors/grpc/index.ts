@@ -161,6 +161,10 @@ export const statusDetailsFor = (
  * @since 0.1.0
  */
 export interface GrpcMetadataLike {
+  /**
+   * All values of `key`, empty when it is absent. A `-bin` key may yield a
+   * Latin-1 string instead of bytes; `toBytes` accepts both.
+   */
   readonly get: (key: string) => ReadonlyArray<string | Uint8Array>;
 }
 
@@ -170,8 +174,11 @@ export interface GrpcMetadataLike {
  * @since 0.1.0
  */
 export interface GrpcServiceErrorLike {
+  /** The gRPC status code; `UNKNOWN` is assumed when absent. */
   readonly code?: number | undefined;
+  /** The status message, used as the message of the resulting error. */
   readonly details?: string | undefined;
+  /** The trailers, where `grpc-status-details-bin` is looked up. */
   readonly metadata?: GrpcMetadataLike | undefined;
 }
 
@@ -181,6 +188,12 @@ const toBytes = (value: string | Uint8Array): Uint8Array =>
     ? Uint8Array.from(value, (char) => char.charCodeAt(0))
     : value;
 
+/**
+ * Decodes a `grpc-status-details-bin` trailer into the A2A error of its first
+ * `ErrorInfo` with a known reason. Malformed bytes or details give
+ * `Option.none()` rather than a throw. An empty `message` falls back to the
+ * message in the `Status`, and `metadata` is kept only in the A2A domain.
+ */
 const a2aErrorOfDetails = (
   bytes: Uint8Array,
   message: string

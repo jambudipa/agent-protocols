@@ -31,7 +31,8 @@
     "lint:effect:all": "EFFECT_SEVERITY=error,warning,message npm run lint:effect",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "version": "changeset version"
+    "version": "changeset version",
+    "docs:audit": "node scripts/docs-audit.mjs --exclude packages/a2a/src/generated --exclude eslint"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",

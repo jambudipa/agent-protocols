@@ -7,3 +7,7 @@ eslint/effect-rules.mjs
 eslint/effect-eslint-config.mjs
 packages/*/spec/
 packages/a2a/src/generated/
+
+# Vendored by the enforce-code-docs skill; kept byte-identical so a reinstall reports no conflict.
+scripts/docs-audit.mjs
+scripts/docs-audit.test.mjs

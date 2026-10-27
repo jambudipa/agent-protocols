@@ -80,6 +80,7 @@ export const Pagination = Schema.Struct({
  */
 export type Pagination = typeof Pagination.Type;
 
+/** A page number or page size: an integer of at least 1. */
 const PageNumber = Schema.Int.check(Schema.isGreaterThanOrEqualTo(1));
 
 /**
@@ -332,6 +333,10 @@ export const RelativePath = Schema.String.check(
   description: "Relative path of the artifact in the agent's workspace.",
 });
 
+/**
+ * Rejects an upload whose client-supplied name has no usable last segment, so
+ * every stored artifact has a file name.
+ */
 const hasUsableFileName = (file: Multipart.PersistedFile): boolean =>
   isUsableFileName(file.name);
 

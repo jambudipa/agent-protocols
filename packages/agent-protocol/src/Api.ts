@@ -45,8 +45,13 @@ export class RequestDecodeErrors extends HttpApiMiddleware.Service<RequestDecode
   '@jambudipa/agent-protocol/Api/RequestDecodeErrors'
 ) {}
 
+/** The path parameter that every per-task endpoint shares. */
 const TaskParams = { task_id: TaskId };
 
+/**
+ * The 500 response of the endpoints that run agent code or touch the
+ * workspace. It has no body, so no failure detail leaks to the client.
+ */
 const InternalServerError = HttpApiError.InternalServerErrorNoContent;
 
 /**

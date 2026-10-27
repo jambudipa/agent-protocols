@@ -50,6 +50,10 @@ export interface Options {
  */
 export const defaultWorkspace = './workspace';
 
+/**
+ * Encodes a 422 response through the wire codec, so the body is
+ * `{ "message": ... }` and not the tagged Effect error.
+ */
 const writeUnprocessableEntity = HttpServerResponse.schemaJson(
   UnprocessableEntityResponse
 );
@@ -76,12 +80,20 @@ export const requestDecodeErrorsLayer =
         )
   );
 
+/**
+ * Logs an unexpected failure with `message` and replaces it with an empty 500.
+ * The cause stays in the server log and never reaches the client.
+ */
 const internalServerError =
   (message: string) => (cause: Cause.YieldableError) =>
     Effect.logError(message, cause).pipe(
       Effect.andThen(Effect.fail(new HttpApiError.InternalServerError()))
     );
 
+/**
+ * The implementation of the `agent` group. Each build of the layer gets its own
+ * task store and workspace, so two servers never share tasks.
+ */
 const handlers = (taskHandler: TaskHandler, options: Options) =>
   HttpApiBuilder.group(
     AgentProtocolApi,

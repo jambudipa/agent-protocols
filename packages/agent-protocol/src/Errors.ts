@@ -11,6 +11,10 @@
 import { Schema, SchemaTransformation } from 'effect';
 import { HttpApiSchema } from 'effect/http-api';
 
+/**
+ * The `{ "message": ... }` body that the specification defines for every error
+ * response. The wire codecs map the tagged errors to and from this shape.
+ */
 const MessageBody = Schema.Struct({
   message: Schema.String.annotate({
     description: 'Message stating the problem',

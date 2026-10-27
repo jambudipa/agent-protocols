@@ -25,9 +25,16 @@ export const transportError = (
 
 /** @internal */
 export interface HttpResult {
+  /** The HTTP status code. Callers test it with {@link isOk}. */
   readonly status: number;
+  /**
+   * Always the empty string: the Effect HTTP client does not expose the
+   * reason phrase. Do not rely on it in error messages.
+   */
   readonly statusText: string;
+  /** The response headers, with lower-case names. */
   readonly headers: { readonly [name: string]: string };
+  /** The whole response body, read as text before any parse. */
   readonly text: string;
 }
 

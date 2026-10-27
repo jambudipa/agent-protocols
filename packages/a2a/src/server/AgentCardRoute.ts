@@ -55,6 +55,7 @@ export const computeETag = (
     return `W/"${Hex.encode(digest).slice(0, 16)}"`;
   });
 
+/** Strips the weak prefix, so that `If-None-Match` compares weakly. */
 const opaque = (tag: string) => tag.trim().replace(/^W\//, '');
 
 /**
@@ -80,8 +81,16 @@ export const isFresh = (
   });
 };
 
+/** Encodes the current card to its v1.0 JSON body. */
 const encodeCard = encodeJson(AgentCard);
 
+/**
+ * Builds the card response: the v0.3 card for a legacy caller when
+ * `legacyCompat` is set, else the current card, with an ETag and a 304
+ * when the caller's copy is fresh. A failure to build the card is
+ * logged and answered with a 500, never a defect. A non-200 legacy
+ * response carries no ETag and no cache headers.
+ */
 const respond = (
   request: HttpServerRequest.HttpServerRequest,
   handler: A2ARequestHandler['Service'],

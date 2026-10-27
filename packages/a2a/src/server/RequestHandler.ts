@@ -172,6 +172,12 @@ export type ExtendedAgentCardProvider =
  * @since 0.1.0
  */
 export interface DefaultRequestHandlerOptions {
+  /**
+   * The public card. Its capabilities switch features on: `streaming`
+   * for streamed sends and subscriptions, `pushNotifications` for the
+   * push config methods and delivery, `extendedAgentCard` for the
+   * extended card.
+   */
   readonly agentCard: AgentCard;
   /**
    * The extended card. A card value goes to authenticated callers only; the
@@ -193,8 +199,17 @@ export interface DefaultRequestHandlerOptions {
   readonly validateInputModes?: boolean;
 }
 
+/**
+ * How the caller consumes an execution. It decides which task an
+ * executor failure is reported against; see `runExecutor`.
+ */
 type ExecutionVariant = 'blocking' | 'streaming';
 
+/**
+ * The shape that a streamed execution commits to with its first event:
+ * one message, or a task followed by updates only. Any other order is
+ * an `UnsupportedOperationError`.
+ */
 type StreamPattern = 'undetermined' | 'message-only' | 'task-lifecycle';
 
 /** The queue of a request ends after a message, a terminal or an input-required status. */
@@ -204,11 +219,20 @@ const isStopEvent = (event: AgentExecutionEvent): boolean =>
     (isTerminal(event.statusUpdate.status.state) ||
       event.statusUpdate.status.state === 'TASK_STATE_INPUT_REQUIRED'));
 
+/**
+ * Cuts the bus stream of one request at its stop event, inclusive, so
+ * that the request ends while the bus can carry later executions.
+ */
 const queueEvents = (
   events: Stream.Stream<AgentExecutionEvent>
 ): Stream.Stream<AgentExecutionEvent> =>
   events.pipe(Stream.takeUntil(isStopEvent));
 
+/**
+ * Wraps an unexpected failure as an `InternalError` with a prefix that
+ * names the failing step, so that it reaches the caller as a protocol
+ * error instead of a defect.
+ */
 const toInternal =
   (message: string) =>
   (cause: unknown): InternalError =>
@@ -216,11 +240,21 @@ const toInternal =
       message: `${message}: ${cause instanceof Error ? cause.message : String(cause)}`,
     });
 
+/**
+ * The text of the main failure of a cause, for the status message of
+ * a FAILED task.
+ */
 const messageOfCause = (cause: Cause.Cause<unknown>): string => {
   const failure = Cause.squash(cause);
   return failure instanceof Error ? failure.message : String(failure);
 };
 
+/**
+ * Builds the default handler. It uses the provided bus manager and push
+ * store when the context has them, else in-memory ones. Executions run
+ * in a fiber set owned by the enclosing scope, so closing the scope
+ * interrupts every running execution.
+ */
 const makeDefaultRequestHandler = (options: DefaultRequestHandlerOptions) =>
   Effect.gen(function* () {
     const agentCard = options.agentCard;

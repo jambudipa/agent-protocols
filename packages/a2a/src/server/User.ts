@@ -13,7 +13,16 @@ import type { HttpServerRequest } from 'effect/http';
  * @since 0.1.0
  */
 export interface User {
+  /**
+   * False for the {@link UnauthenticatedUser}. With a static extended card,
+   * only an authenticated caller gets that card; others get the public one.
+   */
   readonly isAuthenticated: boolean;
+  /**
+   * The owner key of the stores. Empty means anonymous, which the
+   * default resolver maps to `unknown`, so all anonymous callers share
+   * one scope.
+   */
   readonly userName: string;
 }
 

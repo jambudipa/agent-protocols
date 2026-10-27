@@ -41,7 +41,10 @@ export interface LegacyCompat {
  * @since 0.1.0
  */
 export interface LegacyCardResponse {
+  /** The HTTP status: 200 for a card, an error status otherwise. */
   readonly status: number;
+  /** The `Content-Type` of the response. */
   readonly contentType: string;
+  /** The JSON body; the route stringifies it and hashes it for the ETag. */
   readonly body: Schema.Json;
 }

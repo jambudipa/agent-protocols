@@ -60,7 +60,9 @@ export const AgentEvent = {
  * @since 0.1.0
  */
 export interface BusSnapshot {
+  /** The last full task event; none when only updates went by. */
   readonly task: Option.Option<Task>;
+  /** The last state, from a task event or a status update. */
   readonly state: Option.Option<TaskState>;
 }
 
@@ -91,11 +93,22 @@ export interface ExecutionEventBus {
   readonly track: Effect.Effect<Effect.Effect<BusSnapshot>, never, Scope.Scope>;
 }
 
+/**
+ * The mutable record behind one `track` call. `publish` writes it
+ * before the event reaches subscribers, so a snapshot is never
+ * behind the stream.
+ */
 interface Tracker {
+  /** The last task event seen since the tracker started. */
   task: Option.Option<Task>;
+  /** The last task state seen since the tracker started. */
   state: Option.Option<TaskState>;
 }
 
+/**
+ * The state that an event carries; none for a message or an artifact
+ * update.
+ */
 const stateOf = (event: AgentExecutionEvent): Option.Option<TaskState> =>
   'task' in event
     ? Option.some(event.task.status.state)
@@ -176,6 +189,11 @@ export class ExecutionEventBusManager extends Context.Service<
   }
 >()('@jambudipa/a2a/server/ExecutionEventBusManager') {}
 
+/**
+ * Builds the in-memory manager. Buses are keyed by tenant, owner and
+ * task, so two callers with the same task id get different buses. A
+ * bus stays until `cleanupByTaskId` removes it.
+ */
 const makeInMemoryExecutionEventBusManager = Effect.gen(function* () {
   const ownerResolver = yield* CurrentOwnerResolver;
   const buses = MutableHashMap.empty<string, ExecutionEventBus>();

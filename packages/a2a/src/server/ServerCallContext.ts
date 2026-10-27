@@ -17,6 +17,7 @@ import { UnauthenticatedUser, type User } from './User.js';
  * @since 0.1.0
  */
 export interface ServerCallContext {
+  /** The caller, as the binding's `UserBuilder` found it. */
   readonly user: User;
   /** The tenant of the call; empty when the call names none. */
   readonly tenant: string;
@@ -39,10 +40,15 @@ export interface ServerCallContext {
  * @since 0.1.0
  */
 export interface MakeOptions {
+  /** The caller. The default is the {@link UnauthenticatedUser}. */
   readonly user?: User;
+  /** The tenant. The default is empty: no tenant. */
   readonly tenant?: string;
+  /** The `A2A-Version` header value. Absent or empty means `0.3`. */
   readonly requestedVersion?: string;
+  /** The request headers. The default is no headers. */
   readonly headers?: Headers.Headers;
+  /** The extensions that the caller asked for. None are active yet. */
   readonly extensions?: Extensions.Extensions;
 }
 
@@ -117,7 +123,9 @@ export const CurrentOwnerResolver = Context.Reference<OwnerResolver>(
  * @since 0.1.0
  */
 export interface CallerScope {
+  /** The tenant of the call; empty when the call names none. */
   readonly tenant: string;
+  /** The owner that the {@link OwnerResolver} gave for the call. */
   readonly owner: string;
 }
 

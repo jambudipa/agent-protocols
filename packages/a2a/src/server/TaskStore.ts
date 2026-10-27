@@ -45,6 +45,10 @@ export class TaskStoreError extends Schema.TaggedError<TaskStoreError>()(
  * @since 0.1.0
  */
 export interface ListTasksParams extends ListTasksRequest {
+  /**
+   * The page size, an integer from 1 to 100; the handler applies the
+   * default and rejects other values before the store sees them.
+   */
   readonly pageSize: number;
 }
 
@@ -81,8 +85,13 @@ export class TaskStore extends Context.Service<
   }
 >()('@jambudipa/a2a/server/TaskStore') {}
 
+/** The status time of a task; empty when the status has none. */
 const statusTimestamp = (task: Task) => task.status.timestamp ?? '';
 
+/**
+ * The epoch milliseconds of a timestamp; none when it does not parse,
+ * which {@link taskListOrder} sorts as the oldest.
+ */
 const epochMillis = (timestamp: string): Option.Option<number> =>
   Option.map(DateTime.make(timestamp), DateTime.toEpochMillis);
 
@@ -159,6 +168,11 @@ export const pageTasks = (
     };
   });
 
+/**
+ * Builds the in-memory store: one bucket of tasks for each tenant and
+ * owner. It stores the task objects as given, without a copy, so a
+ * caller must not mutate a task after it saves or loads it.
+ */
 const makeInMemoryTaskStore = Effect.gen(function* () {
   const ownerResolver = yield* CurrentOwnerResolver;
   const buckets = MutableHashMap.empty<

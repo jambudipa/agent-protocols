@@ -112,7 +112,9 @@ export const JsonRpcErrorResponse = Schema.Struct({
   error: JsonRpcErrorObject,
 }).annotate({ identifier: 'JsonRpcErrorResponse' });
 
+/** Encodes a success envelope; it throws only on a schema bug. */
 const encodeSuccess = Schema.encodeSync(JsonRpcSuccessResponse);
+/** Encodes an error envelope; it throws only on a schema bug. */
 const encodeFailure = Schema.encodeSync(JsonRpcErrorResponse);
 
 /**
@@ -185,8 +187,11 @@ export interface JsonRpcDispatcher {
  * @since 0.1.0
  */
 export interface JsonRpcRequestEnvelope {
+  /** The request id; none for a notification or a `null` id. */
   readonly id: JsonRpcId;
+  /** The method name; never empty. */
   readonly method: string;
+  /** The `params` member; none when it is absent or `null`. */
   readonly params: Option.Option<Schema.Json>;
 }
 
@@ -249,6 +254,11 @@ export const paramsAreValid = (
   isJsonObject(params.value) &&
   !Object.keys(params.value).includes('');
 
+/**
+ * Moves a non-empty `tenant` in `params` onto the call context, so
+ * that the stores scope the call by it. Other params leave the context
+ * as it is.
+ */
 const withTenant = (
   context: ServerCallContext,
   params: Option.Option<Schema.Json>
@@ -275,7 +285,9 @@ const METHODS: ReadonlyArray<string> = [
   'GetExtendedAgentCard',
 ];
 
+/** Encodes a task result to its v1.0 JSON. */
 const encodeTask = encodeJson(Task);
+/** Encodes one stream event to its v1.0 JSON. */
 const encodeStreamResponse = encodeJson(StreamResponse);
 
 /**
@@ -521,6 +533,10 @@ export interface JsonRpcRouteOptions extends HttpBindingOptions {
   readonly legacyCompat?: LegacyCompat;
 }
 
+/**
+ * The HTTP status of a rejected request: 500 for an internal error,
+ * else 200, because JSON-RPC carries other errors in the body.
+ */
 const errorStatus = (error: ServerError) =>
   error._tag === 'InternalError' ? 500 : 200;
 

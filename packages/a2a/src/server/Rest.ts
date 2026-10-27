@@ -84,11 +84,15 @@ export interface RestRoutesOptions extends HttpBindingOptions {
  * @since 0.1.0
  */
 export interface RestInput {
+  /** The raw request, for an operation that reads its body. */
   readonly request: HttpServerRequest.HttpServerRequest;
+  /** The path parameters of the matched route, such as `taskId`. */
   readonly params: { readonly [name: string]: string | undefined };
+  /** The query parameters; a repeated name keeps its first value. */
   readonly query: { readonly [name: string]: string };
   /** The tenant of the path, when the route has one. */
   readonly tenant: Option.Option<string>;
+  /** The call context, already scoped to the path tenant when there is one. */
   readonly context: ServerCallContext;
 }
 
@@ -110,6 +114,7 @@ export type RestReply =
       readonly events: Stream.Stream<Schema.Json, ServerError>;
     };
 
+/** A JSON response with the `application/a2a+json` content type. */
 const reply = (
   body: Schema.Json,
   status: number,
@@ -129,11 +134,16 @@ export const errorResponse = (
   return reply(toRestErrorBody(error, status), status, headers);
 };
 
+/** The first value of a query parameter that may repeat. */
 const firstValue = (
   value: string | ReadonlyArray<string> | undefined
 ): string | undefined =>
   Predicate.isString(value) ? value : value === undefined ? value : value[0];
 
+/**
+ * Flattens the parsed query to one value for each name, dropping
+ * names without a value.
+ */
 const queryOf = (
   search: HttpServerRequest.ParsedSearchParams['Service']
 ): { readonly [name: string]: string } =>
@@ -239,6 +249,10 @@ export const parsePageSize = (
     : Effect.succeed(parsed);
 };
 
+/**
+ * Parses the `status` filter. It accepts a state name or its index in
+ * `TaskStateNames`, so that a client may send the proto enum number.
+ */
 const parseStatus = (
   value: string
 ): Effect.Effect<TaskState, RequestMalformedError> => {
@@ -254,6 +268,10 @@ const parseStatus = (
     : Effect.succeed(state);
 };
 
+/**
+ * Parses `statusTimestampAfter` and normalises it to ISO 8601 UTC, so
+ * that the store compares timestamps in one format.
+ */
 const parseTimestamp = (
   value: string
 ): Effect.Effect<string, RequestMalformedError> =>
@@ -423,6 +441,7 @@ export const restRoute = (
   ];
 };
 
+/** Wraps an encoded body as a JSON reply with the given status. */
 const json = (status: number) =>
   Effect.map((body: Schema.Json): RestReply => ({
     kind: 'json',
@@ -430,6 +449,10 @@ const json = (status: number) =>
     body,
   }));
 
+/**
+ * The path of one task. The id excludes `/` and `:`, so that the
+ * `:cancel` and `:subscribe` suffixes do not match as part of it.
+ */
 const TASK = '/tasks/:taskId(^[^/:]+)';
 
 /**

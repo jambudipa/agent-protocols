@@ -55,7 +55,9 @@ export class PushNotificationSender extends Context.Service<
  * @since 0.1.0
  */
 export interface SerializedPushNotification {
+  /** The request body, already serialized. */
   readonly body: string;
+  /** The `Content-Type` that the delivery sends with the body. */
   readonly contentType: string;
 }
 
@@ -69,6 +71,7 @@ export type PushNotificationSerializer = (
   task: Option.Option<Task>
 ) => Effect.Effect<SerializedPushNotification, Schema.SchemaError>;
 
+/** Encodes an event to the v1.0 StreamResponse JSON text. */
 const encodeStreamResponse = Schema.encodeEffect(
   Schema.fromJsonString(StreamResponse)
 );
@@ -130,6 +133,10 @@ export const authHeaders = (
   return {};
 };
 
+/**
+ * The task that an event belongs to. A message without a task gives
+ * an empty id, and the sender skips it.
+ */
 const taskIdOf = (response: StreamResponse): string =>
   'task' in response
     ? response.task.id
@@ -139,6 +146,13 @@ const taskIdOf = (response: StreamResponse): string =>
         ? response.statusUpdate.taskId
         : response.artifactUpdate.taskId;
 
+/**
+ * Builds the default sender. Deliveries run in a fiber set owned by
+ * the enclosing scope, so `send` returns before the POST completes.
+ * Deliveries of one task run in `send` order; deliveries of
+ * different tasks run concurrently. A failed delivery is logged and
+ * never retried.
+ */
 const makeDefaultPushNotificationSender = (
   options: DefaultPushNotificationSenderOptions = {}
 ) =>

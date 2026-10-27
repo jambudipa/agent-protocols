@@ -41,7 +41,12 @@ export class PushNotificationStoreError extends Schema.TaggedError<PushNotificat
  * @since 0.1.0
  */
 export interface StoredPushNotificationConfig {
+  /** The config, with its `id` set. */
   readonly config: TaskPushNotificationConfig;
+  /**
+   * The `A2A-Version` of the call that saved the config; see
+   * {@link wireVersionOf}.
+   */
   readonly wireVersion: string;
 }
 
@@ -97,6 +102,11 @@ export const wireVersionOf = (context: ServerCallContext): string =>
     ? A2A_LEGACY_PROTOCOL_VERSION
     : context.requestedVersion;
 
+/**
+ * Builds the in-memory store. Records are keyed by tenant, owner and
+ * task, so a caller cannot see the configs of another scope. The
+ * records live as long as the store value and are lost on restart.
+ */
 const makeInMemoryPushNotificationStore = Effect.gen(function* () {
   const ownerResolver = yield* CurrentOwnerResolver;
   const crypto = yield* Crypto.Crypto;

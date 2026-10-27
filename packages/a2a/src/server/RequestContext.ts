@@ -19,7 +19,9 @@ export interface RequestContext {
   readonly request: SendMessageRequest;
   /** The message of the request. */
   readonly userMessage: Message;
+  /** The resolved task id; equal to `userMessage.taskId`. */
   readonly taskId: string;
+  /** The resolved context id; equal to `userMessage.contextId`. */
   readonly contextId: string;
   /** The existing task that the message continues, if any. */
   readonly task: Option.Option<Task>;

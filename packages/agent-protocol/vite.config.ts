@@ -1,6 +1,10 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
+/**
+ * Resolves a source file to an absolute path, so the build entries do not
+ * depend on the directory Vite runs from.
+ */
 const entry = (file: string) =>
   fileURLToPath(new URL(`./src/${file}`, import.meta.url));
 

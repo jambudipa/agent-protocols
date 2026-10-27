@@ -65,6 +65,11 @@ export interface GrpcTransportOptions {
   readonly channelOptions?: grpc.ChannelOptions;
 }
 
+/**
+ * Wraps protobuf-es bytes as a Node `Buffer` without a copy, as the
+ * `@grpc/grpc-js` serialiser contract needs. The buffer shares memory with
+ * `bytes`, so the caller must not mutate `bytes` afterwards.
+ */
 const toBuffer = (bytes: Uint8Array): Buffer =>
   Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 
@@ -98,8 +103,14 @@ export interface GrpcMethod<
   ReqDesc extends DescMessage,
   ResDesc extends DescMessage,
 > {
+  /**
+   * The full gRPC method path, `/<package>.<Service>/<Method>`. It also names
+   * the call in error messages.
+   */
   readonly path: string;
+  /** The descriptor that serialises the request message. */
   readonly input: ReqDesc;
+  /** The descriptor that deserialises each response message. */
   readonly output: ResDesc;
 }
 
@@ -192,14 +203,24 @@ export const callServerStream = <
     )
   );
 
+/**
+ * Maps a failure to convert between the A2A model and protobuf, in either
+ * direction, to a transport error, so the conversion never escapes as a
+ * schema error.
+ */
 const conversionError = (error: { readonly message: string }) =>
   new A2ATransportError({
     message: `gRPC conversion failed: ${error.message}`,
     protocol: TransportProtocol.GRPC,
   });
 
+/** A method of the 1.0 service table, which also yields its gRPC path. */
 type MethodName = keyof typeof A2AMethods;
 
+/**
+ * One side of a method in `A2AMethods`: the schema between the A2A model and
+ * the protobuf JSON shape, and the protobuf-es descriptor of the message.
+ */
 type MethodSpec<T, E, Desc extends DescMessage> = readonly [
   Schema.Codec<T, E>,
   Desc,
@@ -379,6 +400,10 @@ export const GrpcTransport = {
  * @since 0.1.0
  */
 export interface GrpcLegacyTransport {
+  /**
+   * Builds the legacy transport. The factory owns `client` and closes it
+   * with its scope, so the transport must not close it.
+   */
   readonly make: (
     client: grpc.Client,
     options: GrpcTransportOptions
@@ -391,8 +416,11 @@ export interface GrpcLegacyTransport {
  * @since 0.1.0
  */
 export interface GrpcTransportFactoryOptions {
+  /** The credentials of every channel. The default is insecure. */
   readonly channelCredentials?: grpc.ChannelCredentials;
+  /** Options of every call on every transport, such as a deadline. */
   readonly callOptions?: Partial<grpc.CallOptions>;
+  /** Options of every channel that the factory opens. */
   readonly channelOptions?: grpc.ChannelOptions;
   /**
    * Serves interfaces of a legacy protocol version (`[0.3, 1.0)`) with this

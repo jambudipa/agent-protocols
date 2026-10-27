@@ -54,14 +54,30 @@ import {
 } from '../translate.js';
 import * as V03 from '../Types.js';
 
+/** Encodes a v0.3 task for a result; a failure is an `InternalError`, not a defect. */
 const encodeTask = encodeJson(V03.Task);
+/** Encodes one v0.3 push notification config for a result. */
 const encodeConfig = encodeJson(V03.TaskPushNotificationConfig);
+/**
+ * The list result of `tasks/pushNotificationConfig/list`. v0.3 returns a bare
+ * array, not the v1.0 `{ configs }` object.
+ */
 const TaskPushNotificationConfigs = Schema.Array(
   V03.TaskPushNotificationConfig
 ).annotate({ identifier: 'V03TaskPushNotificationConfigs' });
+/** Encodes the bare array result of the v0.3 list method. */
 const encodeConfigs = encodeJson(TaskPushNotificationConfigs);
+/**
+ * Encodes one translated stream event. An encoding failure ends the stream
+ * with an `InternalError` rather than dropping the event.
+ */
 const encodeEvent = encodeJson(V03.StreamEvent);
 
+/**
+ * The JSON-RPC error envelope for a failure, with the v0.3 error body (no
+ * `ErrorInfo` in `data`). Every method failure goes through it, so v0.3
+ * clients never see a v1.0 error shape.
+ */
 const errorResponse = (id: JsonRpcId, error: ServerError) =>
   JsonRpcOutcome.Response({
     body: errorEnvelope(id, toLegacyErrorBody(error)),

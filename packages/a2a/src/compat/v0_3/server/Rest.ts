@@ -73,6 +73,7 @@ import {
   toCoreTaskPushNotificationConfig,
 } from '../translate.js';
 
+/** A decoded JSON object body. `readBody` guarantees every route sees one, never an array or `null`. */
 type Body = { readonly [key: string]: Schema.Json };
 
 /**
@@ -92,16 +93,26 @@ export type LegacyRestReply =
       readonly events: Stream.Stream<Schema.Json, ServerError>;
     };
 
+/**
+ * What `route` resolves before it calls a route body, so each body only
+ * translates and calls the handler.
+ */
 interface LegacyRestInput {
+  /** The raw request. No route reads it today; it is there for a header or the URL. */
   readonly request: HttpServerRequest.HttpServerRequest;
   /** The body, for a route that reads one; else `{}`. */
   readonly body: Body;
+  /** The `:taskId` path parameter; `''` on a route without one. */
   readonly taskId: string;
+  /** The `:configId` path parameter; `''` on a route without one. */
   readonly configId: string;
+  /** The query string, with only the first value of a repeated name. */
   readonly query: { readonly [name: string]: string };
+  /** The call context that `buildContext` made for this request. */
   readonly context: ServerCallContext;
 }
 
+/** A JSON response with the v0.3 content type, which the reference SDK sends on every body. */
 const reply = (
   body: Schema.Json,
   status: number,
@@ -113,11 +124,17 @@ const reply = (
     headers,
   });
 
+/** The v0.3 error body of a failure, with the v0.3 HTTP status for its code. */
 const errorResponse = (
   error: ServerError,
   headers: Record<string, string> = {}
 ) => reply(toLegacyErrorBody(error), legacyHttpStatusFor(error), headers);
 
+/**
+ * The 400 reply for a body that is not JSON. It is fixed text, as the
+ * reference SDK sends, and carries no extension headers because no call
+ * context exists yet.
+ */
 const parseErrorResponse = () =>
   reply(
     {
@@ -127,6 +144,7 @@ const parseErrorResponse = () =>
     400
   );
 
+/** Flattens the parsed query to one value per name: the first, as the reference SDK reads it. */
 const queryOf = (
   search: HttpServerRequest.ParsedSearchParams['Service']
 ): { readonly [name: string]: string } =>
@@ -137,6 +155,11 @@ const queryOf = (
     })
   );
 
+/**
+ * Turns a route result into the HTTP response. A failure before the first
+ * stream event becomes an ordinary error response; a failure after it becomes
+ * an SSE error event, because the 200 status is already sent.
+ */
 const respond = (
   result: Effect.Effect<LegacyRestReply, ServerError>,
   context: ServerCallContext
@@ -194,9 +217,11 @@ const readBody = (
     })
   );
 
+/** True for a JSON object; arrays are rejected so `readBody` can fall back to `{}`. */
 const isBody = (value: Schema.Json): value is Body =>
   Predicate.isObject(value) && !Array.isArray(value);
 
+/** Wraps an encoded body as a JSON reply with a fixed status, for use in a route's `pipe`. */
 const json = (status: number) =>
   Effect.map((body: Schema.Json): LegacyRestReply => ({
     kind: 'json',
@@ -204,6 +229,10 @@ const json = (status: number) =>
     body,
   }));
 
+/**
+ * The task path. The pattern excludes `:` so that `/v1/tasks/x::cancel`
+ * matches the cancel route, not this one with the id `x::cancel`.
+ */
 const TASK = '/v1/tasks/:taskId(^[^/:]+)';
 
 /**

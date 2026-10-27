@@ -24,6 +24,10 @@ import {
 } from '../translate.js';
 import { StreamEvent } from '../Types.js';
 
+/**
+ * Encodes a v0.3 event straight to the JSON string of the webhook body. It
+ * fails with a schema error; the sender then logs the failure and sends nothing.
+ */
 const encodeEvent = Schema.encodeEffect(Schema.fromJsonString(StreamEvent));
 
 /**

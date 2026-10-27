@@ -94,11 +94,20 @@ export const LegacyA2AService: grpc.ServiceDefinition = makeServiceDefinition(
   pb.A2AService
 );
 
+/**
+ * A codec paired with the protobuf descriptor it converts to and from. Both
+ * parts must describe the same message, or decoding fails at run time.
+ */
 type Spec<T, E, Desc extends DescMessage> = readonly [Schema.Codec<T, E>, Desc];
 
+/** True for a failure the gRPC status mapping knows; anything else is a defect. */
 const isServerError = (value: unknown): value is ServerError =>
   isA2AError(value) || Predicate.isTagged(value, 'InternalError');
 
+/**
+ * The single error to report for a failed call. A non-A2A failure becomes an
+ * `InternalError` with its message, so the client always gets a known status.
+ */
 const serverErrorOf = (cause: Cause.Cause<unknown>): ServerError => {
   const error = Cause.squash(cause);
   return isServerError(error)
@@ -108,9 +117,15 @@ const serverErrorOf = (cause: Cause.Cause<unknown>): ServerError => {
       });
 };
 
+/** Reads a metadata value as text. A binary (`-bin`) value is decoded as UTF-8. */
 const metadataText = (value: grpc.MetadataValue): string =>
   Predicate.isString(value) ? value : value.toString();
 
+/**
+ * The method handlers of the v0.3 service. Each call runs on `services`, the
+ * context captured by `legacyGrpcService`, and is interrupted when the client
+ * cancels. An interrupted call sends no reply.
+ */
 const makeLegacyImplementation = (
   handler: A2ARequestHandler['Service'],
   services: Context.Context<never>,

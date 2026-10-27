@@ -65,20 +65,38 @@ import {
   toCoreTaskPushNotificationConfig,
 } from '../../translate.js';
 
+/** The protocol every error of this transport names, so callers can tell which binding failed. */
 const PROTOCOL = TransportProtocol.GRPC;
 
+/**
+ * Maps a failure to convert between the v0.3 model and its protobuf messages to
+ * a transport error, in either direction of a call.
+ */
 const invalid = (error: { readonly message: string }) =>
   new A2ATransportError({
     message: `Invalid response: ${error.message}`,
     protocol: PROTOCOL,
   });
 
+/**
+ * The part of a generated v0.3 service method that this transport reads. It
+ * lets a method of `pb.A2AService` serve as both the call path and the codec
+ * pair.
+ */
 interface MethodDesc<ReqDesc extends DescMessage, ResDesc extends DescMessage> {
+  /** The RPC name within `a2a.v1.A2AService`, such as `SendMessage`. */
   readonly name: string;
+  /** The protobuf descriptor that the request is encoded with. */
   readonly input: ReqDesc;
+  /** The protobuf descriptor that the reply is decoded with. */
   readonly output: ResDesc;
 }
 
+/**
+ * Builds the shared gRPC call description for a v0.3 method. The path uses the
+ * v0.3 service name, which differs from the v1.0 service that the shared
+ * helpers otherwise call.
+ */
 const methodOf = <ReqDesc extends DescMessage, ResDesc extends DescMessage>(
   method: MethodDesc<ReqDesc, ResDesc>
 ): GrpcMethod<ReqDesc, ResDesc> => ({
@@ -87,6 +105,7 @@ const methodOf = <ReqDesc extends DescMessage, ResDesc extends DescMessage>(
   output: method.output,
 });
 
+/** The generated v0.3 method descriptors, keyed by their camel-case RPC name. */
 const m = pb.A2AService.method;
 
 /**

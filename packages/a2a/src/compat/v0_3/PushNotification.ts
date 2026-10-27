@@ -9,6 +9,7 @@ import type { StreamResponse } from '../../Types.js';
 import { toCoreStreamResponse } from './translate.js';
 import { StreamEvent } from './Types.js';
 
+/** Validates an unknown body as a v0.3 stream event; the caller maps the schema error to `RequestMalformedError`. */
 const decodeEvent = Schema.decodeUnknownEffect(StreamEvent);
 
 /**

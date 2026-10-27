@@ -13,11 +13,17 @@
 import { Schema } from 'effect';
 import { protoEnum } from '../../internal/proto.js';
 
+/** Field schemas shared by the messages below. Each key may be absent, as ProtoJSON omits defaults. */
 const optionalString = Schema.optionalKey(Schema.String);
+/** An optional repeated string field. */
 const optionalStrings = Schema.optionalKey(Schema.Array(Schema.String));
+/** An optional boolean field; absent means `false`. */
 const optionalBoolean = Schema.optionalKey(Schema.Boolean);
+/** An optional integer field; absent means `0`. */
 const optionalInt = Schema.optionalKey(Schema.Int);
+/** An optional `google.protobuf.Struct` field, carried as a JSON object. */
 const optionalStruct = Schema.optionalKey(Schema.JsonObject);
+/** An optional map of OAuth scope names to their descriptions. */
 const optionalScopes = Schema.optionalKey(
   Schema.Record(Schema.String, Schema.String)
 );
@@ -352,6 +358,7 @@ export const ProtoListTaskPushNotificationConfigRequest = Schema.Struct({
 // Agent Card
 // ---------------------------------------------------------------------------
 
+/** The `StringList` wrapper that protobuf needs for a list of scopes inside a map value. */
 const ProtoStringList = Schema.Struct({ list: optionalStrings }).annotate({
   identifier: 'V03ProtoStringList',
 });
@@ -361,6 +368,7 @@ export const ProtoSecurity = Schema.Struct({
   schemes: Schema.optionalKey(Schema.Record(Schema.String, ProtoStringList)),
 }).annotate({ identifier: 'V03ProtoSecurity' });
 
+/** The fields every OAuth flow message shares; each flow uses the subset its grant needs. */
 const flow = {
   authorizationUrl: optionalString,
   tokenUrl: optionalString,

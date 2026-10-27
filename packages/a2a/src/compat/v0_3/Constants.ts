@@ -52,8 +52,10 @@ export const LEGACY_METHOD_PUSH_NOTIFICATION_CONFIG_DELETE =
 export const LEGACY_METHOD_GET_AUTHENTICATED_EXTENDED_CARD =
   'agent/getAuthenticatedExtendedCard';
 
+/** A method name map from one protocol vocabulary to another, keyed by the source name. */
 type Table = { readonly [method: string]: string };
 
+/** v0.3 JSON-RPC method names to v1.0 method names. The source of truth for the other maps. */
 const LEGACY_JSONRPC_TO_V1: Table = {
   [LEGACY_METHOD_MESSAGE_SEND]: 'SendMessage',
   [LEGACY_METHOD_MESSAGE_STREAM]: 'SendStreamingMessage',
@@ -70,6 +72,10 @@ const LEGACY_JSONRPC_TO_V1: Table = {
   [LEGACY_METHOD_GET_AUTHENTICATED_EXTENDED_CARD]: 'GetExtendedAgentCard',
 };
 
+/**
+ * v0.3 JSON-RPC method names to v0.3 gRPC method names. These differ from
+ * v1.0 in places, for example `TaskSubscription` and `GetAgentCard`.
+ */
 const LEGACY_JSONRPC_TO_LEGACY_GRPC: Table = {
   [LEGACY_METHOD_MESSAGE_SEND]: 'SendMessage',
   [LEGACY_METHOD_MESSAGE_STREAM]: 'SendStreamingMessage',
@@ -86,28 +92,45 @@ const LEGACY_JSONRPC_TO_LEGACY_GRPC: Table = {
   [LEGACY_METHOD_GET_AUTHENTICATED_EXTENDED_CARD]: 'GetAgentCard',
 };
 
+/**
+ * v1.0 methods that v0.3 cannot express. A lookup of one of these fails with
+ * `UnsupportedOperationError` rather than `RequestMalformedError`.
+ */
 const V1_METHODS_WITHOUT_LEGACY_EQUIVALENT: ReadonlyArray<string> = [
   'ListTasks',
 ];
 
+/** Swaps keys and values. The caller must pass a one-to-one table, or later entries overwrite earlier ones. */
 const invert = (table: Table): Table =>
   Object.fromEntries(Object.entries(table).map(([from, to]) => [to, from]));
 
+/** v1.0 method names to v0.3 JSON-RPC method names. */
 const V1_TO_LEGACY_JSONRPC = invert(LEGACY_JSONRPC_TO_V1);
+/** v0.3 gRPC method names to v0.3 JSON-RPC method names. */
 const LEGACY_GRPC_TO_LEGACY_JSONRPC = invert(LEGACY_JSONRPC_TO_LEGACY_GRPC);
+/**
+ * v0.3 gRPC method names to v1.0 method names, composed through the JSON-RPC
+ * name. A JSON-RPC name without a v1.0 entry would map to `''`.
+ */
 const LEGACY_GRPC_TO_V1: Table = Object.fromEntries(
   Object.entries(LEGACY_JSONRPC_TO_LEGACY_GRPC).map(([jsonRpc, grpc]) => [
     grpc,
     LEGACY_JSONRPC_TO_V1[jsonRpc] ?? '',
   ])
 );
+/** v1.0 method names to v0.3 gRPC method names. */
 const V1_TO_LEGACY_GRPC = invert(LEGACY_GRPC_TO_V1);
 
+/** Reads own keys only, so a name such as `toString` never matches an inherited property. */
 const entry = (table: Table, method: string): Option.Option<string> =>
   Object.prototype.hasOwnProperty.call(table, method)
     ? Option.fromUndefinedOr(table[method])
     : Option.none();
 
+/**
+ * Maps a method name through a table. Fails with `RequestMalformedError`
+ * naming `direction` when the name is unknown.
+ */
 const lookup = (table: Table, method: string, direction: string) =>
   Option.match(entry(table, method), {
     onNone: () =>
@@ -119,6 +142,11 @@ const lookup = (table: Table, method: string, direction: string) =>
     onSome: (mapped) => Effect.succeed(mapped),
   });
 
+/**
+ * Maps a v1.0 method name to a v0.3 name. Fails with
+ * `UnsupportedOperationError` for a known v1.0 method that v0.3 lacks, and
+ * with `RequestMalformedError` for an unknown name.
+ */
 const lookupFromV1 = (
   table: Table,
   method: string,

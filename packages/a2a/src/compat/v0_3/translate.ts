@@ -18,9 +18,11 @@ import type * as V03 from './Types.js';
  */
 export const DATA_PART_COMPAT_FLAG = 'data_part_compat';
 
+/** Treats `undefined` and the empty string alike as absent, as protobuf defaults do. */
 const nonEmpty = (value: string | undefined): Option.Option<string> =>
   value === undefined || value === '' ? Option.none() : Option.some(value);
 
+/** Spreads `{ [key]: value }` when the value is present and `{}` otherwise, so absent fields are omitted rather than set to `undefined`. */
 const optional = <K extends string, A>(
   key: K,
   value: Option.Option<A>
@@ -30,6 +32,7 @@ const optional = <K extends string, A>(
     onSome: (present) => ({ [key]: present }) as { readonly [P in K]: A },
   });
 
+/** Treats `undefined` and the empty list alike as absent, so empty arrays are omitted from the output. */
 const nonEmptyList = <A>(
   values: ReadonlyArray<A> | undefined
 ): Option.Option<ReadonlyArray<A>> =>
@@ -37,11 +40,13 @@ const nonEmptyList = <A>(
     ? Option.none()
     : Option.some(values);
 
+/** True for a JSON object, the only value a v0.3 data part can hold without wrapping. */
 const isPlainObject = (
   value: V1.DataPart['data']
 ): value is { readonly [key: string]: V1.DataPart['data'] } =>
   Predicate.isObject(value) && !Array.isArray(value);
 
+/** The error every translator here reports for input v1.0 cannot accept. */
 const invalidParams = (message: string) =>
   new RequestMalformedError({ message });
 
@@ -49,6 +54,10 @@ const invalidParams = (message: string) =>
 // Enums
 // ---------------------------------------------------------------------------
 
+/**
+ * Pairs of v0.3 and v1.0 task states. `unknown` pairs with
+ * `TASK_STATE_UNSPECIFIED`, and either lookup falls back to that pair.
+ */
 const STATES: ReadonlyArray<readonly [V03.TaskState, V1.TaskState]> = [
   ['unknown', 'TASK_STATE_UNSPECIFIED'],
   ['submitted', 'TASK_STATE_SUBMITTED'],
@@ -419,6 +428,10 @@ export const toCompatSendMessageResult = (
 // Push notifications
 // ---------------------------------------------------------------------------
 
+/**
+ * A v0.3 push authentication as v1.0. v1.0 holds one scheme, so only the
+ * first is kept and a warning is logged when more are declared.
+ */
 const toCoreAuthentication = (
   authentication: NonNullable<V03.PushNotificationConfig['authentication']>
 ): Effect.Effect<V1.AuthenticationInfo> =>

@@ -15,9 +15,11 @@ import { isLegacyVersion } from '../../internal/version.js';
 import type * as V1 from '../../Types.js';
 import * as V03 from './Types.js';
 
+/** Treats `undefined` and the empty string alike as absent, as protobuf defaults do. */
 const nonEmpty = (value: string | undefined): Option.Option<string> =>
   value === undefined || value === '' ? Option.none() : Option.some(value);
 
+/** Spreads `{ [key]: value }` when the value is present and `{}` otherwise, so absent fields are omitted rather than set to `undefined`. */
 const optional = <K extends string, A>(
   key: K,
   value: Option.Option<A>
@@ -27,6 +29,7 @@ const optional = <K extends string, A>(
     onSome: (present) => ({ [key]: present }) as { readonly [P in K]: A },
   });
 
+/** Treats `undefined` and the empty list alike as absent, so empty arrays are omitted from the output. */
 const nonEmptyList = <A>(
   values: ReadonlyArray<A> | undefined
 ): Option.Option<ReadonlyArray<A>> =>
@@ -61,6 +64,11 @@ export const toCoreSecurityRequirement = (
   ),
 });
 
+/**
+ * A v1.0 OAuth flow set as v0.3 flows. Only the first flow present is kept.
+ * A flow v0.3 cannot express, such as `deviceCode`, yields `{}`; missing
+ * implicit and password fields fall back to empty values.
+ */
 const toCompatOAuthFlows = (flows: V1.OAuthFlows): V03.OAuthFlows => {
   if ('authorizationCode' in flows) {
     const flow = flows.authorizationCode;
@@ -159,6 +167,11 @@ export const toCompatSecurityScheme = (
   };
 };
 
+/**
+ * v0.3 OAuth flows as a v1.0 flow set. Only the first flow present is kept,
+ * in the order authorization code, client credentials, implicit, password.
+ * Fails with `RequestMalformedError` when no flow is declared.
+ */
 const toCoreOAuthFlows = (
   flows: V03.OAuthFlows
 ): Effect.Effect<V1.OAuthFlows, RequestMalformedError> => {
@@ -276,6 +289,7 @@ export interface ToCompatAgentCardOptions {
   readonly embedV1Interfaces?: boolean;
 }
 
+/** True for an interface a v0.3 client can use: an empty (unstated) version or one in [0.3, 1.0). */
 const isCompatInterface = (agentInterface: V1.AgentInterface) =>
   agentInterface.protocolVersion === '' ||
   isLegacyVersion(agentInterface.protocolVersion);
@@ -475,6 +489,7 @@ export const toCoreAgentCard = (
     };
   });
 
+/** Top-level card fields that exist in v0.3 only, so their presence marks a legacy card. */
 const LEGACY_ONLY_TOP_LEVEL_FIELDS: ReadonlyArray<string> = [
   'preferredTransport',
   'additionalInterfaces',
@@ -499,6 +514,7 @@ export const isLegacyAgentCard = (raw: unknown): boolean => {
   return Predicate.isString(version) && isLegacyVersion(version);
 };
 
+/** Validates an unknown value as a v0.3 card; the caller maps the schema error to `RequestMalformedError`. */
 const decodeLegacyCard = Schema.decodeUnknownEffect(V03.AgentCard);
 
 /**

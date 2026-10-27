@@ -11,9 +11,11 @@ import { RequestMalformedError } from '../../errors/index.js';
 import type * as P from './ProtoTypes.js';
 import type * as V03 from './Types.js';
 
+/** Treats `undefined` and the empty string alike as absent, as protobuf defaults do. */
 const nonEmpty = (value: string | undefined): Option.Option<string> =>
   value === undefined || value === '' ? Option.none() : Option.some(value);
 
+/** Spreads `{ [key]: value }` when the value is present and `{}` otherwise, so absent fields are omitted rather than set to `undefined`. */
 const optional = <K extends string, A>(
   key: K,
   value: Option.Option<A>
@@ -23,6 +25,7 @@ const optional = <K extends string, A>(
     onSome: (present) => ({ [key]: present }) as { readonly [P in K]: A },
   });
 
+/** Treats `undefined` and the empty list alike as absent, so empty arrays are omitted from the output. */
 const nonEmptyList = <A>(
   values: ReadonlyArray<A> | undefined
 ): Option.Option<ReadonlyArray<A>> =>
@@ -30,14 +33,17 @@ const nonEmptyList = <A>(
     ? Option.none()
     : Option.some(values);
 
+/** Keeps only `true`, so a `false` flag is omitted, as ProtoJSON omits default values. */
 const trueOnly = (value: boolean | undefined): Option.Option<boolean> =>
   value === true ? Option.some(true) : Option.none();
 
+/** True for a JSON object. A v0.3 data part must be an object, so any other value is wrapped as `{ value }`. */
 const isJsonObject = (
   value: Schema.Json
 ): value is { readonly [key: string]: Schema.Json } =>
   Predicate.isObject(value) && !Array.isArray(value);
 
+/** The error every converter here reports for input the protobuf form cannot carry. */
 const invalidParams = (message: string) =>
   new RequestMalformedError({ message });
 
@@ -45,7 +51,9 @@ const invalidParams = (message: string) =>
 // Resource names
 // ---------------------------------------------------------------------------
 
+/** Matches `tasks/{id}/pushNotificationConfigs/{configId}` exactly. */
 const CONFIG_NAME = /^tasks\/([^/]+)\/pushNotificationConfigs\/([^/]+)$/;
+/** Matches `tasks/{id}` and any resource name below it. */
 const TASK_NAME = /^tasks\/([^/]+)(?:\/|$)/;
 
 /**
@@ -94,6 +102,10 @@ export const generatePushNotificationConfigName = (
 // From the protobuf form
 // ---------------------------------------------------------------------------
 
+/**
+ * Pairs of protobuf and v0.3 task states. `TASK_STATE_UNSPECIFIED` pairs with
+ * `unknown`, and either lookup falls back to that pair.
+ */
 const STATES: ReadonlyArray<readonly [P.ProtoTaskState, V03.TaskState]> = [
   ['TASK_STATE_UNSPECIFIED', 'unknown'],
   ['TASK_STATE_SUBMITTED', 'submitted'],
@@ -106,11 +118,13 @@ const STATES: ReadonlyArray<readonly [P.ProtoTaskState, V03.TaskState]> = [
   ['TASK_STATE_AUTH_REQUIRED', 'auth-required'],
 ];
 
+/** An absent state is read as `TASK_STATE_UNSPECIFIED`, which becomes `unknown`. */
 const fromProtoState = (state: P.ProtoTaskState | undefined): V03.TaskState =>
   STATES.find(
     ([proto]) => proto === (state ?? 'TASK_STATE_UNSPECIFIED')
   )?.[1] ?? 'unknown';
 
+/** The protobuf state of a v0.3 state. */
 const toProtoState = (state: V03.TaskState): P.ProtoTaskState =>
   STATES.find(([, compat]) => compat === state)?.[0] ??
   'TASK_STATE_UNSPECIFIED';
@@ -345,6 +359,7 @@ export const fromProtoSendMessageRequest = (
     };
   });
 
+/** A protobuf security requirement as a v0.3 requirement; a scheme without a list gets no scopes. */
 const fromProtoSecurity = (
   security: P.ProtoAgentCard['security'] extends
     ReadonlyArray<infer S> | undefined
@@ -358,8 +373,15 @@ const fromProtoSecurity = (
     ])
   );
 
+/** One value of the protobuf card's `securitySchemes` map: a security scheme, despite the name. */
 type ProtoFlow = NonNullable<P.ProtoAgentCard['securitySchemes']>[string];
 
+/**
+ * A protobuf security scheme as a v0.3 scheme. Only the first OAuth flow
+ * present is kept, in the order implicit, password, authorization code,
+ * client credentials. Missing strings become `''`. Fails with
+ * `RequestMalformedError` when no scheme member is set.
+ */
 const fromProtoSecurityScheme = (
   scheme: ProtoFlow
 ): Effect.Effect<V03.SecurityScheme, RequestMalformedError> => {
@@ -734,6 +756,7 @@ export const toProtoSendMessageRequest = (
   ...optional('metadata', Option.fromUndefinedOr(params.metadata)),
 });
 
+/** A v0.3 security requirement in the protobuf `StringList` wrapper form. */
 const toProtoSecurity = (requirement: V03.SecurityRequirement) => ({
   schemes: Object.fromEntries(
     Object.entries(requirement).map(([name, scopes]) => [
@@ -743,6 +766,10 @@ const toProtoSecurity = (requirement: V03.SecurityRequirement) => ({
   ),
 });
 
+/**
+ * A v0.3 security scheme in the protobuf form. Only the first OAuth flow
+ * present is kept, in the same order as `fromProtoSecurityScheme`.
+ */
 const toProtoSecurityScheme = (scheme: V03.SecurityScheme) => {
   const description = optional('description', nonEmpty(scheme.description));
   switch (scheme.type) {

@@ -10,10 +10,15 @@
  */
 import { Schema } from 'effect';
 
+/** Field schemas shared by the definitions below. An optional string field. */
 const optionalString = Schema.optionalKey(Schema.String);
+/** A required id, such as a message, task, context or artifact id. Any string is accepted. */
 const Identifier = Schema.String.annotate({ description: 'An identifier.' });
+/** An optional list of strings, such as extension URIs or media types. */
 const optionalStrings = Schema.optionalKey(Schema.Array(Schema.String));
+/** The optional free-form `metadata` object that most v0.3 definitions carry. */
 const optionalMetadata = Schema.optionalKey(Schema.JsonObject);
+/** A map of OAuth scope names to their descriptions. */
 const Scopes = Schema.Record(Schema.String, Schema.String);
 
 /**

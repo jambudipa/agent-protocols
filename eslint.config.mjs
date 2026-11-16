@@ -65,9 +65,14 @@ export default [
 
   {
     // @jambudipa/ag-ui: JSON `null` is a legal AG-UI value (a state snapshot,
-    // a CUSTOM value, a JSON Patch value), so the sample runs that the tests
-    // replay carry it as data under test.
-    files: ['packages/ag-ui/test/samples.ts', 'packages/ag-ui/test/proto.test.ts'],
+    // a CUSTOM value, a JSON Patch value), and an explicit `null` on an
+    // optional field is the input that the schema tests must reject, so
+    // these tests carry it as data under test.
+    files: [
+      'packages/ag-ui/test/samples.ts',
+      'packages/ag-ui/test/proto.test.ts',
+      'packages/ag-ui/test/schema.test.ts',
+    ],
     rules: { 'effect/no-null-use-option': 'off' },
   },
 

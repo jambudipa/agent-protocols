@@ -736,12 +736,22 @@ const frameData = (frame: string): Option.Option<string> => {
   return data.length === 0 ? Option.none() : Option.some(data.join('\n'));
 };
 
-/** Splits buffered text into complete frames and the incomplete tail. */
+/** Turns every CRLF and lone CR into LF, as SSE line endings allow. */
+const normaliseLines = (text: string) => text.replace(/\r\n?/g, '\n');
+
+/**
+ * Splits buffered text into complete frames and the incomplete tail. A
+ * trailing lone CR stays in the tail unnormalised, because the LF of its
+ * CRLF may arrive in the next chunk.
+ */
 const splitFrames = (
   buffer: string
 ): readonly [tail: string, frames: ReadonlyArray<string>] => {
-  const parts = buffer.split('\n\n');
-  return [parts[parts.length - 1] ?? '', parts.slice(0, -1)];
+  const held = buffer.endsWith('\r') ? '\r' : '';
+  const parts = normaliseLines(
+    buffer.slice(0, buffer.length - held.length)
+  ).split('\n\n');
+  return [(parts[parts.length - 1] ?? '') + held, parts.slice(0, -1)];
 };
 
 /**
@@ -758,7 +768,6 @@ export const decodeSse = <E, R>(
 ): Stream.Stream<AgUiEvent, E | AgUiDecodeError, R> =>
   body.pipe(
     Stream.decodeText(),
-    Stream.map((text) => text.replace(/\r\n?/g, '\n')),
     Stream.mapAccumEffect(
       () => '',
       (buffer: string, text: string) => {
@@ -771,7 +780,7 @@ export const decodeSse = <E, R>(
             )
           : Effect.succeed([tail, frames] as const);
       },
-      { onHalt: (tail) => (tail.length > 0 ? [tail] : []) }
+      { onHalt: (tail) => (tail.length > 0 ? [normaliseLines(tail)] : []) }
     ),
     Stream.filterMap(Filter.fromPredicateOption(frameData)),
     Stream.mapEffect(decodeEventJson),

@@ -4,11 +4,12 @@
  * optional field and a wrong-typed field rejected).
  */
 import { assert, it } from '@effect/vitest';
-import { Effect, Exit, Option, Schema } from 'effect';
+import { Effect, Exit, Option, Schema, Stream } from 'effect';
 import {
   AgUiEvent,
   decodeEvent,
   decodeEventJson,
+  decodeSse,
   encodeEventJson,
   encodeSse,
   RunAgentInput,
@@ -131,5 +132,22 @@ it.effect('rejects an event that does not match its schema on encode', () =>
       encodeEventJson(invalid as unknown as AgUiEvent)
     );
     assert.isTrue(Exit.isFailure(exit));
+  })
+);
+
+it.effect('reads a CRLF frame whose CR and LF arrive in different chunks', () =>
+  Effect.gen(function* () {
+    const bytes = (text: string) => new TextEncoder().encode(text);
+    // One frame of two data lines; its first CRLF is split across chunks,
+    // so reading the CR alone as a line end would end the frame early.
+    const events = yield* decodeSse(
+      Stream.make(
+        bytes('data: {"type":"RUN_STARTED",\r'),
+        bytes('\ndata: "threadId":"t","runId":"r"}\r\n\r\n')
+      )
+    ).pipe(Stream.runCollect);
+    assert.deepStrictEqual(events, [
+      { type: 'RUN_STARTED', threadId: 't', runId: 'r' },
+    ]);
   })
 );

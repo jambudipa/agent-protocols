@@ -14,7 +14,7 @@
  * @since 0.1.0
  */
 import { Effect, Filter, HashMap, Option, Predicate, Schema, Stream } from 'effect';
-import { AgUiDecodeError } from './Errors.js';
+import { AgUiDecodeError, AgUiEncodeError } from './Errors.js';
 import { formatIssue, received } from './internal/issues.js';
 import { stripEvent } from './internal/tolerance.js';
 import {
@@ -601,11 +601,11 @@ const JsonText = Schema.fromJsonString(Schema.Json);
  */
 export const encodeEventJson = (
   event: AgUiEvent
-): Effect.Effect<string, AgUiDecodeError> =>
+): Effect.Effect<string, AgUiEncodeError> =>
   Schema.encodeEffect(EventJson)(event).pipe(
     Effect.mapError(
       (error) =>
-        new AgUiDecodeError({
+        new AgUiEncodeError({
           message: `Cannot encode ${event.type}: ${formatIssue(error.issue, event)}`,
         })
     )
@@ -711,7 +711,7 @@ export const MAX_SSE_FRAME_SIZE = 10 * 1024 * 1024;
  */
 export const encodeSse = (
   event: AgUiEvent
-): Effect.Effect<string, AgUiDecodeError> =>
+): Effect.Effect<string, AgUiEncodeError> =>
   Effect.map(encodeEventJson(event), (json) => `data: ${json}\n\n`);
 
 /** The JSON payload of one SSE frame, or none when it has no `data:` line. */

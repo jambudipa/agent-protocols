@@ -19,6 +19,17 @@ export class AgUiDecodeError extends Schema.TaggedError<AgUiDecodeError>()(
 ) {}
 
 /**
+ * An event did not encode: it does not match its schema, so it cannot go on
+ * the wire. A server turns this into `RUN_ERROR`.
+ *
+ * @since 0.1.0
+ */
+export class AgUiEncodeError extends Schema.TaggedError<AgUiEncodeError>()(
+  'AgUiEncodeError',
+  { message: Schema.String }
+) {}
+
+/**
  * The events decoded but break an ordering rule of the protocol, such as
  * content for a message that was never started. The message names the rule,
  * in the words of the reference client.

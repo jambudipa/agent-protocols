@@ -12,3 +12,4 @@
 export * from './Errors.js';
 export * from './Events.js';
 export * from './Types.js';
+export * from './Verify.js';

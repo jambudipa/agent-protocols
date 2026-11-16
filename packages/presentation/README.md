@@ -16,7 +16,7 @@ a browser as well as in Node.
 ## Install
 
 ```sh
-npm install @jambudipa/presentation effect@~4.0.6
+npm install @jambudipa/presentation effect@~4.1.4
 ```
 
 `effect` is the only peer dependency.

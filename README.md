@@ -6,14 +6,14 @@ plus the agent-to-UI presentation format.
 
 | Layer          | Protocol                                                                      | Package                                                          | Status                      |
 | -------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------- |
-| Agent to tools | MCP                                                                           | none: reuse `effect/ai` (see below)                              | Available in `effect@4.0.6` |
+| Agent to tools | MCP                                                                           | none: reuse `effect/ai` (see below)                              | Available in `effect@4.1.4` |
 | Human to agent | [Agent Protocol v1](https://github.com/AI-Engineer-Foundation/agent-protocol) | [`@jambudipa/agent-protocol`](packages/agent-protocol/README.md) | Server and client           |
 | Agent to agent | [A2A v1.0](https://a2a-protocol.org)                                          | [`@jambudipa/a2a`](packages/a2a/README.md)                       | Server and client           |
 | Agent to UI    | jam-flow presentation wire format                                             | [`@jambudipa/presentation`](packages/presentation/README.md)     | V1 and T5 contracts         |
 
 ## MCP: reuse `effect/ai`
 
-This workspace has no MCP package on purpose. `effect@4.0.6` ships a complete
+This workspace has no MCP package on purpose. `effect@4.1.4` ships a complete
 MCP implementation under `effect/ai`, on the same version as every package here:
 
 - `McpServer` serves tools, resources and prompts. Use `McpServer.layerStdio`
@@ -28,14 +28,14 @@ import { McpClient, McpServer } from 'effect/ai';
 ```
 
 `effect/ai` is an unstable sub-path, so pin `effect` to a patch range
-(`~4.0.6`), as this workspace does.
+(`~4.1.4`), as this workspace does.
 
 ## Workspace
 
 One npm workspace. Each package lives in `packages/<name>/`, builds to `dist/`
 with type declarations, and declares an `exports` map.
 
-- Effect `~4.0.6`, with every `@effect/*` package on the same range.
+- Effect `~4.1.4`, with every `@effect/*` package on the same range.
 - ESM, `moduleResolution` `NodeNext`, `strict`, TypeScript `~6.0.3`.
 - Tests use `@effect/vitest`.
 

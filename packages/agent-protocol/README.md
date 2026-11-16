@@ -12,7 +12,7 @@ not have.
 ## Install
 
 ```sh
-npm install @jambudipa/agent-protocol effect@~4.0.6 @effect/platform-node@~4.0.6
+npm install @jambudipa/agent-protocol effect@~4.1.4 @effect/platform-node@~4.1.4
 ```
 
 `effect` and `@effect/platform-node` are peer dependencies.

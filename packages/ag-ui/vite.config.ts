@@ -14,6 +14,7 @@ const entries = {
   'server/index': entry('server/index.ts'),
   'client/index': entry('client/index.ts'),
   'proto/index': entry('proto/index.ts'),
+  node: entry('node.ts'),
 };
 
 export default defineConfig({

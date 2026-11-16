@@ -32,7 +32,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "version": "changeset version",
-    "docs:audit": "node scripts/docs-audit.mjs --exclude packages/a2a/src/generated --exclude eslint"
+    "docs:audit": "node scripts/docs-audit.mjs --exclude packages/a2a/src/generated --exclude packages/ag-ui/src/generated --exclude eslint"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",

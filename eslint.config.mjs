@@ -35,6 +35,12 @@ export default [
   },
 
   {
+    // protobuf-es output of `npm run generate -w @jambudipa/ag-ui`, under the
+    // same rule as the a2a output above.
+    ignores: ['packages/ag-ui/src/generated/**'],
+  },
+
+  {
     // No inline disables: an exception belongs in scoped configuration here.
     linterOptions: {
       noInlineConfig: true,
@@ -54,6 +60,14 @@ export default [
     // gRPC boundary (@jambudipa/a2a): the @grpc/grpc-js unary callback reads
     // a `null` error as success, so this one adapter file writes `null`.
     files: ['packages/a2a/src/server/grpc/internal/callbacks.ts'],
+    rules: { 'effect/no-null-use-option': 'off' },
+  },
+
+  {
+    // @jambudipa/ag-ui: JSON `null` is a legal AG-UI value (a state snapshot,
+    // a CUSTOM value, a JSON Patch value), so the sample runs that the tests
+    // replay carry it as data under test.
+    files: ['packages/ag-ui/test/samples.ts', 'packages/ag-ui/test/proto.test.ts'],
     rules: { 'effect/no-null-use-option': 'off' },
   },
 

@@ -11,6 +11,7 @@ const entry = (file: string) =>
 /** One entry for each export path; the key is the path under `dist/`. */
 const entries = {
   index: entry('index.ts'),
+  'proto/index': entry('proto/index.ts'),
 };
 
 export default defineConfig({

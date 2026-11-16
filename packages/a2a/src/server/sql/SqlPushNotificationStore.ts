@@ -4,15 +4,8 @@
  *
  * @since 0.1.0
  */
-import {
-  Crypto,
-  Effect,
-  Layer,
-  Option,
-  Predicate,
-  Schema,
-  Struct,
-} from 'effect';
+import { Effect, Layer, Option, Predicate, Schema, Struct } from 'effect';
+import { SecureRandom } from 'effect/crypto';
 import { SqlClient } from 'effect/sql';
 import { A2A_LEGACY_PROTOCOL_VERSION } from '../../Constants.js';
 import { TaskPushNotificationConfig } from '../../Types.js';
@@ -175,7 +168,7 @@ const makeSqlPushNotificationStore = (
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
     const dialect: SqlDialect = yield* dialectOf(sql);
-    const crypto = yield* Crypto.Crypto;
+    const random = yield* SecureRandom.SecureRandom;
     const ownerResolver = yield* CurrentOwnerResolver;
     const table = sql(options.tableName ?? PUSH_NOTIFICATION_TABLE);
     const column = (name: string) => sql`${sql(name)}`;
@@ -220,7 +213,7 @@ const makeSqlPushNotificationStore = (
           const configId =
             config.id !== undefined && config.id !== ''
               ? config.id
-              : yield* crypto.randomUUIDv4();
+              : yield* random.uuidV4();
           const stored = { ...config, id: configId };
           const row = yield* toRow(scopeOf(taskId, context), {
             config: stored,
@@ -263,7 +256,7 @@ const makeSqlPushNotificationStore = (
 
 /**
  * The SQL push notification store. It requires a `SqlClient` of PostgreSQL,
- * MySQL or SQLite whose schema is migrated, and `Crypto` for config ids.
+ * MySQL or SQLite whose schema is migrated, and `SecureRandom` for config ids.
  *
  * @since 0.1.0
  */
@@ -274,7 +267,7 @@ export const SqlPushNotificationStore = {
   ): Layer.Layer<
     PushNotificationStore,
     UnsupportedDialectError,
-    SqlClient.SqlClient | Crypto.Crypto
+    SqlClient.SqlClient | SecureRandom.SecureRandom
   > =>
     Layer.effect(PushNotificationStore, makeSqlPushNotificationStore(options)),
 };

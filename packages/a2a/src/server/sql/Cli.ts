@@ -148,7 +148,14 @@ export const connect = (
   SqlClient.SqlClient,
   A2aDbError | SqlError.SqlError | Config.ConfigError
 > =>
-  Layer.unwrap(
+  // The drivers' layers differ in their error types, so name the common one.
+  Layer.unwrap<
+    SqlClient.SqlClient,
+    SqlError.SqlError | Config.ConfigError,
+    never,
+    A2aDbError,
+    never
+  >(
     Effect.gen(function* () {
       const scheme = yield* schemeOf(url);
       switch (scheme) {

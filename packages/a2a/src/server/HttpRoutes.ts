@@ -4,8 +4,8 @@
  *
  * @since 0.1.0
  */
-import type { Crypto } from 'effect';
 import { Layer } from 'effect';
+import type { Digest } from 'effect/crypto';
 import type { HttpRouter } from 'effect/http';
 import {
   AgentCardRoute,
@@ -53,7 +53,7 @@ export const A2AHttpRoutes = {
   ): Layer.Layer<
     never,
     never,
-    HttpRouter.HttpRouter | A2ARequestHandler | Crypto.Crypto
+    HttpRouter.HttpRouter | A2ARequestHandler | Digest.Digest
   > => {
     const shared = {
       ...(options.userBuilder === undefined

@@ -12,7 +12,6 @@
 import {
   Cause,
   Context,
-  Crypto,
   DateTime,
   Deferred,
   Effect,
@@ -26,6 +25,7 @@ import {
   Scope,
   Stream,
 } from 'effect';
+import { SecureRandom } from 'effect/crypto';
 import { HttpClient } from 'effect/http';
 import { DEFAULT_PAGE_SIZE } from '../Constants.js';
 import {
@@ -260,7 +260,7 @@ const makeDefaultRequestHandler = (options: DefaultRequestHandlerOptions) =>
     const agentCard = options.agentCard;
     const taskStore = yield* TaskStore;
     const executor = yield* AgentExecutor;
-    const crypto = yield* Crypto.Crypto;
+    const random = yield* SecureRandom.SecureRandom;
     const ownerResolver = yield* CurrentOwnerResolver;
     const busManager = yield* Effect.serviceOption(
       ExecutionEventBusManager
@@ -300,9 +300,7 @@ const makeDefaultRequestHandler = (options: DefaultRequestHandlerOptions) =>
       return `${tenant}\u0000${owner}\u0000${taskId}`;
     };
 
-    const uuid = crypto
-      .randomUUIDv4()
-      .pipe(Effect.mapError(toInternal('Cannot generate an id')));
+    const uuid = random.uuidV4();
     const now = Effect.map(DateTime.now, DateTime.formatIso);
     const storeError = Effect.mapError(toInternal('Task store failure'));
     const pushStoreError = Effect.mapError(
@@ -1212,7 +1210,7 @@ const makePushSender = (
 
 /**
  * The default request handler. It requires a `TaskStore`, an
- * `AgentExecutor` and `Crypto` (for ids); it uses an
+ * `AgentExecutor` and `SecureRandom` (for ids); it uses an
  * `ExecutionEventBusManager`, a `PushNotificationStore` and a
  * `PushNotificationSender` when they are provided, and in-memory defaults
  * otherwise. The default sender needs an `HttpClient`.
@@ -1226,6 +1224,6 @@ export const DefaultRequestHandler = {
   ): Layer.Layer<
     A2ARequestHandler,
     never,
-    TaskStore | AgentExecutor | Crypto.Crypto
+    TaskStore | AgentExecutor | SecureRandom.SecureRandom
   > => Layer.effect(A2ARequestHandler, makeDefaultRequestHandler(options)),
 };

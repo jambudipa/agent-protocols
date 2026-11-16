@@ -4,7 +4,8 @@
  *
  * @since 0.1.0
  */
-import { Crypto, Effect, Layer, Option, Result } from 'effect';
+import { Effect, Layer, Option, Result } from 'effect';
+import { Digest } from 'effect/crypto';
 import { Hex } from 'effect/encoding';
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from 'effect/http';
 import {
@@ -46,12 +47,11 @@ export interface AgentCardRouteOptions {
  */
 export const computeETag = (
   body: string
-): Effect.Effect<string, never, Crypto.Crypto> =>
+): Effect.Effect<string, never, Digest.Digest> =>
   Effect.gen(function* () {
-    const crypto = yield* Crypto.Crypto;
-    const digest = yield* crypto
-      .digest('SHA-256', new TextEncoder().encode(body))
-      .pipe(Effect.orDie);
+    const digest = yield* Digest.Digest.use((service) =>
+      service.digest(Digest.sha256, new TextEncoder().encode(body))
+    );
     return `W/"${Hex.encode(digest).slice(0, 16)}"`;
   });
 
@@ -151,7 +151,7 @@ const respond = (
 
 /**
  * The Agent Card route on the `HttpRouter`. It requires the
- * `A2ARequestHandler` and `Crypto` (for the ETag).
+ * `A2ARequestHandler` and `Digest` (for the ETag).
  *
  * @since 0.1.0
  */
@@ -161,18 +161,18 @@ export const AgentCardRoute = {
   ): Layer.Layer<
     never,
     never,
-    HttpRouter.HttpRouter | A2ARequestHandler | Crypto.Crypto
+    HttpRouter.HttpRouter | A2ARequestHandler | Digest.Digest
   > =>
     HttpRouter.use((router) =>
       Effect.gen(function* () {
         const handler = yield* A2ARequestHandler;
-        const crypto = yield* Crypto.Crypto;
+        const digest = yield* Digest.Digest;
         yield* router.add(
           'GET',
           options.path ?? `/${AGENT_CARD_PATH}`,
           Effect.flatMap(HttpServerRequest.HttpServerRequest, (request) =>
             respond(request, handler, options).pipe(
-              Effect.provideService(Crypto.Crypto, crypto)
+              Effect.provideService(Digest.Digest, digest)
             )
           )
         );

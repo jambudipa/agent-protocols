@@ -57,11 +57,11 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@effect/platform-node": "~4.0.6",
-    "effect": "~4.0.6"
+    "@effect/platform-node": "~4.1.4",
+    "effect": "~4.1.4"
   },
   "devDependencies": {
-    "@effect/platform-node": "~4.0.6",
-    "effect": "~4.0.6"
+    "@effect/platform-node": "~4.1.4",
+    "effect": "~4.1.4"
   }
 }

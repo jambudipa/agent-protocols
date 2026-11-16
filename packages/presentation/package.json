@@ -52,9 +52,9 @@
     "access": "public"
   },
   "peerDependencies": {
-    "effect": "~4.0.6"
+    "effect": "~4.1.4"
   },
   "devDependencies": {
-    "effect": "~4.0.6"
+    "effect": "~4.1.4"
   }
 }

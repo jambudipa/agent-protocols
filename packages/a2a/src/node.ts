@@ -53,7 +53,7 @@ export const defaultPort = 41241;
 /**
  * Serves the HTTP bindings of the provided `A2ARequestHandler` on a Node
  * HTTP server. The server starts when the layer is built and stops when its
- * scope closes. It provides `Crypto` for the routes.
+ * scope closes. It provides `SecureRandom` and `Digest` for the routes.
  *
  * @since 0.1.0
  */

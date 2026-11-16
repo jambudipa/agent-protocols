@@ -8,7 +8,8 @@
  *
  * @since 0.1.0
  */
-import { Crypto, Effect, Layer, Option } from 'effect';
+import { Effect, Layer, Option } from 'effect';
+import { SecureRandom } from 'effect/crypto';
 import type { Cause } from 'effect';
 import { HttpServerResponse } from 'effect/http';
 import {
@@ -99,14 +100,12 @@ const handlers = (taskHandler: TaskHandler, options: Options) =>
     AgentProtocolApi,
     'agent',
     Effect.fn('AgentProtocolServer.handlers')(function* (handlers) {
-      const crypto = yield* Crypto.Crypto;
+      const random = yield* SecureRandom.SecureRandom;
       const store = yield* makeTaskStore;
       const workspace = yield* makeWorkspace(
         options.workspace ?? defaultWorkspace
       );
-      const uuid = crypto
-        .randomUUIDv4()
-        .pipe(Effect.catch(internalServerError('Unable to generate an id')));
+      const uuid = random.uuidV4();
 
       return handlers.handleAll({
         createAgentTask: Effect.fn('AgentProtocolServer.createAgentTask')(

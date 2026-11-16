@@ -4,15 +4,8 @@
  *
  * @since 0.1.0
  */
-import {
-  Context,
-  Crypto,
-  Effect,
-  Layer,
-  MutableHashMap,
-  Option,
-  Schema,
-} from 'effect';
+import { Context, Effect, Layer, MutableHashMap, Option, Schema } from 'effect';
+import { SecureRandom } from 'effect/crypto';
 import { A2A_LEGACY_PROTOCOL_VERSION } from '../Constants.js';
 import type { TaskPushNotificationConfig } from '../Types.js';
 import {
@@ -109,7 +102,7 @@ export const wireVersionOf = (context: ServerCallContext): string =>
  */
 const makeInMemoryPushNotificationStore = Effect.gen(function* () {
   const ownerResolver = yield* CurrentOwnerResolver;
-  const crypto = yield* Crypto.Crypto;
+  const random = yield* SecureRandom.SecureRandom;
   const entries = MutableHashMap.empty<
     string,
     ReadonlyArray<StoredPushNotificationConfig>
@@ -126,23 +119,14 @@ const makeInMemoryPushNotificationStore = Effect.gen(function* () {
         const stored =
           config.id !== undefined && config.id !== ''
             ? config
-            : { ...config, id: yield* crypto.randomUUIDv4() };
+            : { ...config, id: yield* random.uuidV4() };
         const key = entryKey(taskId, context);
         MutableHashMap.set(entries, key, [
           ...get(key).filter((entry) => entry.config.id !== stored.id),
           { config: stored, wireVersion: wireVersionOf(context) },
         ]);
         return stored;
-      }).pipe(
-        Effect.catchTag('PlatformError', (cause) =>
-          Effect.fail(
-            new PushNotificationStoreError({
-              message: 'Cannot generate a config id.',
-              cause,
-            })
-          )
-        )
-      ),
+      }),
     load: (taskId, context) =>
       Effect.sync(() =>
         get(entryKey(taskId, context)).map((entry) => entry.config)

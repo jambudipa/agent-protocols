@@ -94,7 +94,10 @@ export const richRun: ReadonlyArray<AgUiEvent> = [
     toolCallId: 'tc-2',
     content: [
       { type: 'text', text: 'result' },
-      { type: 'video', source: { type: 'url', value: 'https://v', mimeType: 'video/mp4' } },
+      {
+        type: 'video',
+        source: { type: 'url', value: 'https://v', mimeType: 'video/mp4' },
+      },
     ],
     role: 'tool',
   },
@@ -160,7 +163,12 @@ export const richRun: ReadonlyArray<AgUiEvent> = [
     outcome: { type: 'suspended', interruptIds: ['i-1'] },
   },
   { type: 'SUBAGENT_STARTED', subagentRunId: 's-2', name: 'writer' },
-  { type: 'SUBAGENT_ERROR', subagentRunId: 's-2', message: 'gave up', code: 'E1' },
+  {
+    type: 'SUBAGENT_ERROR',
+    subagentRunId: 's-2',
+    message: 'gave up',
+    code: 'E1',
+  },
   {
     type: 'MESSAGES_SNAPSHOT',
     messages: [{ id: 'a-1', role: 'assistant', content: 'Hello' }],

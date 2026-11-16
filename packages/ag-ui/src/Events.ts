@@ -13,7 +13,15 @@
  *
  * @since 0.1.0
  */
-import { Effect, Filter, HashMap, Option, Predicate, Schema, Stream } from 'effect';
+import {
+  Effect,
+  Filter,
+  HashMap,
+  Option,
+  Predicate,
+  Schema,
+  Stream,
+} from 'effect';
 import { AgUiDecodeError, AgUiEncodeError } from './Errors.js';
 import { formatIssue, received } from './internal/issues.js';
 import { stripEvent } from './internal/tolerance.js';
@@ -117,9 +125,11 @@ const event = <const T extends EventType, F extends Schema.Struct.Fields>(
   type: T,
   fields: F
 ) =>
-  Schema.Struct({ type: Schema.Literal(type), ...fields, ...baseEvent }).annotate(
-    { identifier: type }
-  );
+  Schema.Struct({
+    type: Schema.Literal(type),
+    ...fields,
+    ...baseEvent,
+  }).annotate({ identifier: type });
 
 // ---------------------------------------------------------------------------
 // Text messages
@@ -580,7 +590,10 @@ const memberByType = HashMap.fromIterable(
  *
  * @since 0.1.0
  */
-export type AgUiEventOf<T extends EventType> = Extract<AgUiEvent, { readonly type: T }>;
+export type AgUiEventOf<T extends EventType> = Extract<
+  AgUiEvent,
+  { readonly type: T }
+>;
 
 // ---------------------------------------------------------------------------
 // JSON

@@ -87,10 +87,13 @@ const lines = (
   const line = (message: string) => [`${pointer(path)}: ${message}`];
   const mismatch = (ast: SchemaAST.AST) =>
     line(
-      `expected ${describe(ast)}, received ${Option.match(valueAt(input, path), {
-        onNone: () => 'nothing',
-        onSome: received,
-      })}`
+      `expected ${describe(ast)}, received ${Option.match(
+        valueAt(input, path),
+        {
+          onNone: () => 'nothing',
+          onSome: received,
+        }
+      )}`
     );
   switch (issue._tag) {
     case 'Pointer':

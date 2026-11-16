@@ -505,7 +505,11 @@ const stepFinished = (
   }
   return Effect.succeed({
     ...state,
-    activeSteps: HashMap.set(state.activeSteps, owner, HashSet.remove(steps, name)),
+    activeSteps: HashMap.set(
+      state.activeSteps,
+      owner,
+      HashSet.remove(steps, name)
+    ),
   });
 };
 
@@ -516,7 +520,9 @@ const reasoningOpen = (
 ) => {
   const id = event.messageId;
   const isSpan = event.type === 'REASONING_START';
-  const open = isSpan ? state.activeReasoningSpans : state.activeReasoningMessages;
+  const open = isSpan
+    ? state.activeReasoningSpans
+    : state.activeReasoningMessages;
   if (HashSet.has(open, id)) {
     return Effect.fail(
       violation(
@@ -529,7 +535,13 @@ const reasoningOpen = (
   }
   const existing = HashMap.get(state.owners.reasoning, id);
   return unlessMismatch(
-    tagMismatch(event.type, event.subagentRunId, existing, 'reasoning message', id),
+    tagMismatch(
+      event.type,
+      event.subagentRunId,
+      existing,
+      'reasoning message',
+      id
+    ),
     () => ({
       ...state,
       ...(isSpan
@@ -558,7 +570,9 @@ const reasoningContinue = (
 ) => {
   const id = event.messageId;
   const isSpan = event.type === 'REASONING_END';
-  const open = isSpan ? state.activeReasoningSpans : state.activeReasoningMessages;
+  const open = isSpan
+    ? state.activeReasoningSpans
+    : state.activeReasoningMessages;
   if (!HashSet.has(open, id)) {
     return Effect.fail(
       violation(
@@ -832,9 +846,17 @@ const closer = (pending: Pending): AgUiEvent => {
   const owner = field('subagentRunId', pending.subagentRunId);
   switch (pending.kind) {
     case 'text':
-      return { type: 'TEXT_MESSAGE_END', messageId: pending.messageId, ...owner };
+      return {
+        type: 'TEXT_MESSAGE_END',
+        messageId: pending.messageId,
+        ...owner,
+      };
     case 'tool':
-      return { type: 'TOOL_CALL_END', toolCallId: pending.toolCallId, ...owner };
+      return {
+        type: 'TOOL_CALL_END',
+        toolCallId: pending.toolCallId,
+        ...owner,
+      };
     case 'reasoning':
       return {
         type: 'REASONING_MESSAGE_END',
@@ -851,7 +873,8 @@ const closeLane = (
 ): readonly [Lanes, ReadonlyArray<AgUiEvent>] =>
   Option.match(HashMap.get(lanes, owner), {
     onNone: () => [lanes, []] as const,
-    onSome: (pending) => [HashMap.remove(lanes, owner), [closer(pending)]] as const,
+    onSome: (pending) =>
+      [HashMap.remove(lanes, owner), [closer(pending)]] as const,
   });
 
 /** Closes every lane. */
@@ -942,8 +965,7 @@ const agree = (
 /** The first failure of several checks. */
 const firstFailure = (
   checks: ReadonlyArray<Option.Option<AgUiVerifyError>>
-): Option.Option<AgUiVerifyError> =>
-  Option.firstSomeOf(checks);
+): Option.Option<AgUiVerifyError> => Option.firstSomeOf(checks);
 
 /** The result of one step of chunk expansion. */
 type Step = Effect.Effect<
@@ -969,14 +991,29 @@ const textChunk = (
     const continues =
       Option.isSome(open) &&
       open.value.kind === 'text' &&
-      (chunk.messageId === undefined || chunk.messageId === open.value.messageId)
+      (chunk.messageId === undefined ||
+        chunk.messageId === open.value.messageId)
         ? Option.some(open.value)
         : Option.none();
     if (Option.isSome(continues)) {
       const fields = continues.value;
       const mismatch = firstFailure([
-        agree(chunk.type, 'text message', fields.messageId, 'role', chunk.role, Option.some(fields.role)),
-        agree(chunk.type, 'text message', fields.messageId, 'name', chunk.name, fields.name),
+        agree(
+          chunk.type,
+          'text message',
+          fields.messageId,
+          'role',
+          chunk.role,
+          Option.some(fields.role)
+        ),
+        agree(
+          chunk.type,
+          'text message',
+          fields.messageId,
+          'name',
+          chunk.name,
+          fields.name
+        ),
       ]);
       if (Option.isSome(mismatch)) return yield* Effect.fail(mismatch.value);
       return [lanes, textContent(chunk, fields, [])] as const;
@@ -1015,7 +1052,8 @@ const textContent = (
   fields: Extract<Pending, { readonly kind: 'text' }>,
   before: ReadonlyArray<AgUiEvent>
 ): ReadonlyArray<AgUiEvent> => {
-  const owner = chunk.subagentRunId ?? Option.getOrUndefined(fields.subagentRunId);
+  const owner =
+    chunk.subagentRunId ?? Option.getOrUndefined(fields.subagentRunId);
   const content: AgUiEvent = {
     type: 'TEXT_MESSAGE_CONTENT',
     messageId: fields.messageId,
@@ -1023,17 +1061,13 @@ const textContent = (
     ...field('subagentRunId', Option.fromUndefinedOr(owner)),
     ...chunkOrigin(chunk),
   };
-  const carries =
-    chunk.delta !== undefined || chunk.rawEvent !== undefined;
+  const carries = chunk.delta !== undefined || chunk.rawEvent !== undefined;
   const metadataOnly = before.length === 0 && chunk.metadata !== undefined;
   return carries || metadataOnly ? [...before, content] : before;
 };
 
 /** Expands a `TOOL_CALL_CHUNK`. */
-const toolChunk = (
-  lanes: Lanes,
-  chunk: AgUiEventOf<'TOOL_CALL_CHUNK'>
-): Step =>
+const toolChunk = (lanes: Lanes, chunk: AgUiEventOf<'TOOL_CALL_CHUNK'>): Step =>
   Effect.gen(function* () {
     const lane = yield* resolveLane(
       lanes,
@@ -1054,8 +1088,22 @@ const toolChunk = (
     if (Option.isSome(continues)) {
       const fields = continues.value;
       const mismatch = firstFailure([
-        agree(chunk.type, 'tool call', fields.toolCallId, 'toolCallName', chunk.toolCallName, Option.some(fields.toolCallName)),
-        agree(chunk.type, 'tool call', fields.toolCallId, 'parentMessageId', chunk.parentMessageId, fields.parentMessageId),
+        agree(
+          chunk.type,
+          'tool call',
+          fields.toolCallId,
+          'toolCallName',
+          chunk.toolCallName,
+          Option.some(fields.toolCallName)
+        ),
+        agree(
+          chunk.type,
+          'tool call',
+          fields.toolCallId,
+          'parentMessageId',
+          chunk.parentMessageId,
+          fields.parentMessageId
+        ),
       ]);
       if (Option.isSome(mismatch)) return yield* Effect.fail(mismatch.value);
       return [lanes, toolArgs(chunk, fields, [])] as const;
@@ -1100,7 +1148,8 @@ const toolArgs = (
   fields: Extract<Pending, { readonly kind: 'tool' }>,
   before: ReadonlyArray<AgUiEvent>
 ): ReadonlyArray<AgUiEvent> => {
-  const owner = chunk.subagentRunId ?? Option.getOrUndefined(fields.subagentRunId);
+  const owner =
+    chunk.subagentRunId ?? Option.getOrUndefined(fields.subagentRunId);
   const args: AgUiEvent = {
     type: 'TOOL_CALL_ARGS',
     toolCallId: fields.toolCallId,
@@ -1108,8 +1157,7 @@ const toolArgs = (
     ...field('subagentRunId', Option.fromUndefinedOr(owner)),
     ...chunkOrigin(chunk),
   };
-  const carries =
-    chunk.delta !== undefined || chunk.rawEvent !== undefined;
+  const carries = chunk.delta !== undefined || chunk.rawEvent !== undefined;
   const metadataOnly = before.length === 0 && chunk.metadata !== undefined;
   return carries || metadataOnly ? [...before, args] : before;
 };
@@ -1132,7 +1180,8 @@ const reasoningChunk = (
     if (
       Option.isSome(open) &&
       open.value.kind === 'reasoning' &&
-      (chunk.messageId === undefined || chunk.messageId === open.value.messageId)
+      (chunk.messageId === undefined ||
+        chunk.messageId === open.value.messageId)
     ) {
       return [lanes, reasoningContent(chunk, open.value, [])] as const;
     }
@@ -1167,7 +1216,8 @@ const reasoningContent = (
   fields: Extract<Pending, { readonly kind: 'reasoning' }>,
   before: ReadonlyArray<AgUiEvent>
 ): ReadonlyArray<AgUiEvent> => {
-  const owner = chunk.subagentRunId ?? Option.getOrUndefined(fields.subagentRunId);
+  const owner =
+    chunk.subagentRunId ?? Option.getOrUndefined(fields.subagentRunId);
   const content: AgUiEvent = {
     type: 'REASONING_MESSAGE_CONTENT',
     messageId: fields.messageId,
@@ -1175,8 +1225,7 @@ const reasoningContent = (
     ...field('subagentRunId', Option.fromUndefinedOr(owner)),
     ...chunkOrigin(chunk),
   };
-  const carries =
-    chunk.delta !== undefined || chunk.rawEvent !== undefined;
+  const carries = chunk.delta !== undefined || chunk.rawEvent !== undefined;
   const metadataOnly = before.length === 0 && chunk.metadata !== undefined;
   return carries || metadataOnly ? [...before, content] : before;
 };

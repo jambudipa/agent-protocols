@@ -670,14 +670,16 @@ export const JsonPointer = Schema.String.check(
  * does not define to be ignored rather than rejected, so the extra keys are
  * kept rather than dropped.
  */
-const patchOperation = <const Op extends string, F extends Schema.Struct.Fields>(
+const patchOperation = <
+  const Op extends string,
+  F extends Schema.Struct.Fields,
+>(
   op: Op,
   fields: F
 ) =>
-  Schema.StructWithRest(
-    Schema.Struct({ op: Schema.Literal(op), ...fields }),
-    [Schema.Record(Schema.String, Schema.Json)]
-  );
+  Schema.StructWithRest(Schema.Struct({ op: Schema.Literal(op), ...fields }), [
+    Schema.Record(Schema.String, Schema.Json),
+  ]);
 
 /**
  * Inserts `value` at `path`.

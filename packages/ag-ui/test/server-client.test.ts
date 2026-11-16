@@ -98,19 +98,24 @@ layer(testServer(replay, { proto: true }))('a fixed run', (it) => {
     })
   );
 
-  it.effect('is one data: frame for each event, with no event: or id: line', () =>
-    Effect.gen(function* () {
-      const response = yield* post('{"threadId":"t","runId":"r","messages":[]}', 'text/event-stream');
-      assert.strictEqual(response.status, 200);
-      assert.strictEqual(response.contentType, 'text/event-stream');
-      const text = new TextDecoder().decode(response.bytes);
-      const frames = text.split('\n\n').filter((frame) => frame !== '');
-      assert.strictEqual(frames.length, richRun.length);
-      for (const frame of frames) {
-        assert.match(frame, /^data: \{.*\}$/);
-      }
-      assert.notInclude(text, 'null,');
-    })
+  it.effect(
+    'is one data: frame for each event, with no event: or id: line',
+    () =>
+      Effect.gen(function* () {
+        const response = yield* post(
+          '{"threadId":"t","runId":"r","messages":[]}',
+          'text/event-stream'
+        );
+        assert.strictEqual(response.status, 200);
+        assert.strictEqual(response.contentType, 'text/event-stream');
+        const text = new TextDecoder().decode(response.bytes);
+        const frames = text.split('\n\n').filter((frame) => frame !== '');
+        assert.strictEqual(frames.length, richRun.length);
+        for (const frame of frames) {
+          assert.match(frame, /^data: \{.*\}$/);
+        }
+        assert.notInclude(text, 'null,');
+      })
   );
 
   it.effect('answers protobuf only when Accept prefers it', () =>
@@ -122,58 +127,81 @@ layer(testServer(replay, { proto: true }))('a fixed run', (it) => {
       assert.deepStrictEqual(proto.bytes.slice(0, first.length), first);
       const any = yield* post(body, '*/*');
       assert.strictEqual(any.contentType, 'text/event-stream');
-      const preferred = yield* post(body, `text/event-stream;q=0.5, ${PROTO_MEDIA_TYPE}`);
+      const preferred = yield* post(
+        body,
+        `text/event-stream;q=0.5, ${PROTO_MEDIA_TYPE}`
+      );
       assert.strictEqual(preferred.contentType, PROTO_MEDIA_TYPE);
-      const sse = yield* post(body, `${PROTO_MEDIA_TYPE};q=0.1, text/event-stream`);
+      const sse = yield* post(
+        body,
+        `${PROTO_MEDIA_TYPE};q=0.1, text/event-stream`
+      );
       assert.strictEqual(sse.contentType, 'text/event-stream');
     })
   );
 
-  it.effect('answers 400 to an invalid body, and the client fails with it', () =>
-    Effect.gen(function* () {
-      const response = yield* post('{}', 'text/event-stream');
-      assert.strictEqual(response.status, 400);
-      assert.include(new TextDecoder().decode(response.bytes), 'threadId');
-      const exit = yield* Effect.exit(runSse({} as RunAgentInput));
-      assert.strictEqual(failureTag(exit), 'AgUiEncodeError');
-      const http = yield* HttpClient.HttpClient;
-      const raw = yield* Effect.exit(
-        Effect.gen(function* () {
-          const client = yield* AgUiClient;
-          return yield* Stream.runCollect(client.run(input));
-        }).pipe(
-          Effect.provide(AgUiClient.layer({ url: AGENT_PATH })),
-          Effect.provideService(
-            HttpClient.HttpClient,
-            HttpClient.mapRequest(http, HttpClientRequest.bodyText('{}', 'application/json'))
+  it.effect(
+    'answers 400 to an invalid body, and the client fails with it',
+    () =>
+      Effect.gen(function* () {
+        const response = yield* post('{}', 'text/event-stream');
+        assert.strictEqual(response.status, 400);
+        assert.include(new TextDecoder().decode(response.bytes), 'threadId');
+        const exit = yield* Effect.exit(runSse({} as RunAgentInput));
+        assert.strictEqual(failureTag(exit), 'AgUiEncodeError');
+        const http = yield* HttpClient.HttpClient;
+        const raw = yield* Effect.exit(
+          Effect.gen(function* () {
+            const client = yield* AgUiClient;
+            return yield* Stream.runCollect(client.run(input));
+          }).pipe(
+            Effect.provide(AgUiClient.layer({ url: AGENT_PATH })),
+            Effect.provideService(
+              HttpClient.HttpClient,
+              HttpClient.mapRequest(
+                http,
+                HttpClientRequest.bodyText('{}', 'application/json')
+              )
+            )
           )
-        )
-      );
-      assert.strictEqual(failureTag(raw), 'AgUiHttpError');
-      if (Exit.isFailure(raw) && raw.cause.reasons[0]?._tag === 'Fail') {
-        const error = raw.cause.reasons[0].error;
-        assert.strictEqual(error._tag === 'AgUiHttpError' && error.status, 400);
-        assert.include(error._tag === 'AgUiHttpError' ? error.body : '', 'threadId');
-      }
-    })
+        );
+        assert.strictEqual(failureTag(raw), 'AgUiHttpError');
+        if (Exit.isFailure(raw) && raw.cause.reasons[0]?._tag === 'Fail') {
+          const error = raw.cause.reasons[0].error;
+          assert.strictEqual(
+            error._tag === 'AgUiHttpError' && error.status,
+            400
+          );
+          assert.include(
+            error._tag === 'AgUiHttpError' ? error.body : '',
+            'threadId'
+          );
+        }
+      })
   );
 });
 
-layer(testServer(failing, { proto: true }))('an agent that fails mid-run', (it) => {
-  it.effect('ends the stream with RUN_ERROR and status 200', () =>
-    Effect.gen(function* () {
-      const response = yield* post('{"threadId":"t","runId":"r","messages":[]}', 'text/event-stream');
-      assert.strictEqual(response.status, 200);
-      for (const run of [runSse, runProto]) {
-        const events = yield* run(input);
-        assert.deepStrictEqual(events, [
-          { type: 'RUN_STARTED', threadId: 't-1', runId: 'r-1' },
-          { type: 'RUN_ERROR', message: 'the model is down' },
-        ]);
-      }
-    })
-  );
-});
+layer(testServer(failing, { proto: true }))(
+  'an agent that fails mid-run',
+  (it) => {
+    it.effect('ends the stream with RUN_ERROR and status 200', () =>
+      Effect.gen(function* () {
+        const response = yield* post(
+          '{"threadId":"t","runId":"r","messages":[]}',
+          'text/event-stream'
+        );
+        assert.strictEqual(response.status, 200);
+        for (const run of [runSse, runProto]) {
+          const events = yield* run(input);
+          assert.deepStrictEqual(events, [
+            { type: 'RUN_STARTED', threadId: 't-1', runId: 'r-1' },
+            { type: 'RUN_ERROR', message: 'the model is down' },
+          ]);
+        }
+      })
+    );
+  }
+);
 
 layer(
   testServer(() =>
@@ -187,21 +215,35 @@ layer(
     Effect.gen(function* () {
       const exit = yield* Effect.exit(runSse(input));
       assert.strictEqual(failureTag(exit), 'AgUiVerifyError');
-      assert.include(failureMessage(exit), "No active text message found with ID 'never-opened'");
+      assert.include(
+        failureMessage(exit),
+        "No active text message found with ID 'never-opened'"
+      );
     })
   );
 });
 
 layer(
-  testServer(() =>
-    Stream.make<ReadonlyArray<AgUiEvent>>(
-      { type: 'RUN_STARTED', threadId: 't', runId: 'r' },
-      { type: 'TEXT_MESSAGE_CHUNK', messageId: 'm', role: 'user', delta: 'a' },
-      { type: 'TEXT_MESSAGE_CHUNK', delta: 'b' },
-      { type: 'TOOL_CALL_CHUNK', toolCallId: 'tc', toolCallName: 'f', delta: '{' },
-      { type: 'TOOL_CALL_CHUNK', delta: '}' },
-      { type: 'RUN_FINISHED', threadId: 't', runId: 'r' }
-    ),
+  testServer(
+    () =>
+      Stream.make<ReadonlyArray<AgUiEvent>>(
+        { type: 'RUN_STARTED', threadId: 't', runId: 'r' },
+        {
+          type: 'TEXT_MESSAGE_CHUNK',
+          messageId: 'm',
+          role: 'user',
+          delta: 'a',
+        },
+        { type: 'TEXT_MESSAGE_CHUNK', delta: 'b' },
+        {
+          type: 'TOOL_CALL_CHUNK',
+          toolCallId: 'tc',
+          toolCallName: 'f',
+          delta: '{',
+        },
+        { type: 'TOOL_CALL_CHUNK', delta: '}' },
+        { type: 'RUN_FINISHED', threadId: 't', runId: 'r' }
+      ),
     { proto: true }
   )
 )('a run of chunks', (it) => {
@@ -238,7 +280,10 @@ layer(
     Effect.gen(function* () {
       const exit = yield* Effect.exit(runSse(input));
       assert.strictEqual(failureTag(exit), 'AgUiVerifyError');
-      assert.include(failureMessage(exit), "does not match the open stream's toolCallName");
+      assert.include(
+        failureMessage(exit),
+        "does not match the open stream's toolCallName"
+      );
     })
   );
 });

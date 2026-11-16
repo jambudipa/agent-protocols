@@ -31,62 +31,72 @@ it('round-trips a RunAgentInput with every message role and part kind', () => {
   assert.deepStrictEqual(Schema.decodeUnknownSync(codec)(json), richInput);
 });
 
-it.effect('drops unknown keys and unknown union members, and keeps patch extras', () =>
-  Effect.gen(function* () {
-    const decoded = yield* decodeEvent({
-      type: 'MESSAGES_SNAPSHOT',
-      future: 1,
-      messages: [
-        { id: 'a', role: 'oracle', content: 'x' },
-        {
-          id: 'b',
-          role: 'user',
-          extra: true,
-          content: [
-            { type: 'text', text: 'keep' },
-            { type: 'hologram' },
-            { type: 'image', source: { type: 'ipfs', value: 'q' } },
-          ],
-        },
-      ],
-    });
-    assert.deepStrictEqual(
-      decoded,
-      Option.some({
+it.effect(
+  'drops unknown keys and unknown union members, and keeps patch extras',
+  () =>
+    Effect.gen(function* () {
+      const decoded = yield* decodeEvent({
         type: 'MESSAGES_SNAPSHOT',
-        messages: [{ id: 'b', role: 'user', content: [{ type: 'text', text: 'keep' }] }],
-      })
-    );
-    const patch = yield* decodeEvent({
-      type: 'STATE_DELTA',
-      delta: [
-        { op: 'remove', path: '/a', value: 'left over' },
-        { op: 'increment', path: '/b' },
-      ],
-    });
-    assert.deepStrictEqual(
-      patch,
-      Option.some({
+        future: 1,
+        messages: [
+          { id: 'a', role: 'oracle', content: 'x' },
+          {
+            id: 'b',
+            role: 'user',
+            extra: true,
+            content: [
+              { type: 'text', text: 'keep' },
+              { type: 'hologram' },
+              { type: 'image', source: { type: 'ipfs', value: 'q' } },
+            ],
+          },
+        ],
+      });
+      assert.deepStrictEqual(
+        decoded,
+        Option.some({
+          type: 'MESSAGES_SNAPSHOT',
+          messages: [
+            {
+              id: 'b',
+              role: 'user',
+              content: [{ type: 'text', text: 'keep' }],
+            },
+          ],
+        })
+      );
+      const patch = yield* decodeEvent({
         type: 'STATE_DELTA',
-        delta: [{ op: 'remove', path: '/a', value: 'left over' }],
-      })
-    );
-    const outcome = yield* decodeEvent({
-      type: 'RUN_FINISHED',
-      threadId: 't',
-      runId: 'r',
-      outcome: { type: 'paused' },
-    });
-    assert.deepStrictEqual(
-      outcome,
-      Option.some({ type: 'RUN_FINISHED', threadId: 't', runId: 'r' })
-    );
-  })
+        delta: [
+          { op: 'remove', path: '/a', value: 'left over' },
+          { op: 'increment', path: '/b' },
+        ],
+      });
+      assert.deepStrictEqual(
+        patch,
+        Option.some({
+          type: 'STATE_DELTA',
+          delta: [{ op: 'remove', path: '/a', value: 'left over' }],
+        })
+      );
+      const outcome = yield* decodeEvent({
+        type: 'RUN_FINISHED',
+        threadId: 't',
+        runId: 'r',
+        outcome: { type: 'paused' },
+      });
+      assert.deepStrictEqual(
+        outcome,
+        Option.some({ type: 'RUN_FINISHED', threadId: 't', runId: 'r' })
+      );
+    })
 );
 
 it.effect('gives none for an event of an unknown type', () =>
   Effect.gen(function* () {
-    assert.isTrue(Option.isNone(yield* decodeEvent({ type: 'THINKING_START' })));
+    assert.isTrue(
+      Option.isNone(yield* decodeEvent({ type: 'THINKING_START' }))
+    );
     assert.isTrue(Option.isNone(yield* decodeEvent({ type: 'META_EVENT' })));
   })
 );
@@ -103,7 +113,12 @@ it.effect('rejects a null on an optional field and a wrong-typed field', () =>
     assert.isTrue(Exit.isFailure(wrongType));
     assert.include(String(wrongType), '/delta: expected string, received 42');
     const array = yield* Effect.exit(
-      decodeEvent({ type: 'RUN_FINISHED', threadId: 't', runId: 'r', outcome: [] })
+      decodeEvent({
+        type: 'RUN_FINISHED',
+        threadId: 't',
+        runId: 'r',
+        outcome: [],
+      })
     );
     assert.include(String(array), 'expected object, received array');
   })

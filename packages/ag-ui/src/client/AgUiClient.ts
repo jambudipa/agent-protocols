@@ -87,7 +87,9 @@ const mediaTypeOf = (response: HttpClientResponse.HttpClientResponse) =>
 
 /** Maps a failure of the response body to a transport failure. */
 const transportFailure = (error: { readonly message: string }) =>
-  new AgUiTransportError({ message: `The response broke off: ${error.message}` });
+  new AgUiTransportError({
+    message: `The response broke off: ${error.message}`,
+  });
 
 /** Reads the events of a 2xx response, by its `Content-Type`. */
 const readEvents = (
@@ -114,7 +116,9 @@ const make = (
   codec: Option.Option<AgUiProtoCodec['Service']>
 ) => {
   const accept = options.encoding === 'proto' ? PROTO_ACCEPT : SSE_CONTENT_TYPE;
-  const run = (input: RunAgentInput): Stream.Stream<AgUiEvent, AgUiClientError> =>
+  const run = (
+    input: RunAgentInput
+  ): Stream.Stream<AgUiEvent, AgUiClientError> =>
     Stream.unwrap(
       Effect.gen(function* () {
         const body = yield* encodeInput(input);

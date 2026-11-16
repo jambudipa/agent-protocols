@@ -24,7 +24,15 @@
  * @since 0.1.0
  */
 import type { Context } from 'effect';
-import { Cause, Effect, Layer, Option, Predicate, Schema, Stream } from 'effect';
+import {
+  Cause,
+  Effect,
+  Layer,
+  Option,
+  Predicate,
+  Schema,
+  Stream,
+} from 'effect';
 import {
   Headers,
   HttpRouter,
@@ -100,7 +108,8 @@ const readInput = (
 const failureMessage = <E>(cause: Cause.Cause<E>): string =>
   Option.match(Cause.findErrorOption(cause), {
     onSome: (error) =>
-      Predicate.hasProperty(error, 'message') && Predicate.isString(error.message)
+      Predicate.hasProperty(error, 'message') &&
+      Predicate.isString(error.message)
         ? error.message
         : String(error),
     onNone: () => Cause.pretty(cause),
@@ -117,7 +126,9 @@ interface Encoding {
   /** The `Content-Type` of the response. */
   readonly contentType: string;
   /** Encodes one event as the bytes of one frame. */
-  readonly encode: (event: AgUiEvent) => Effect.Effect<Uint8Array, AgUiEncodeError>;
+  readonly encode: (
+    event: AgUiEvent
+  ) => Effect.Effect<Uint8Array, AgUiEncodeError>;
 }
 
 /** The SSE encoding, always available. */

@@ -39,15 +39,17 @@ const corpusEvents = Effect.gen(function* () {
 const viaReference = (bytes: Uint8Array): unknown =>
   structuredClone(referenceDecode(bytes));
 
-it.effect('encodes every corpus event so that @ag-ui/proto decodes it unchanged', () =>
-  Effect.gen(function* () {
-    const events = yield* corpusEvents;
-    assert.isAbove(events.length, 200);
-    for (const event of events) {
-      const bytes = yield* encodeEvent(event);
-      assert.deepStrictEqual(viaReference(bytes), event, event.type);
-    }
-  })
+it.effect(
+  'encodes every corpus event so that @ag-ui/proto decodes it unchanged',
+  () =>
+    Effect.gen(function* () {
+      const events = yield* corpusEvents;
+      assert.isAbove(events.length, 200);
+      for (const event of events) {
+        const bytes = yield* encodeEvent(event);
+        assert.deepStrictEqual(viaReference(bytes), event, event.type);
+      }
+    })
 );
 
 it.effect('decodes every corpus event that @ag-ui/proto encodes', () =>
@@ -60,36 +62,41 @@ it.effect('decodes every corpus event that @ag-ui/proto encodes', () =>
   })
 );
 
-it.effect('frames a stream of events and reads it back across chunk boundaries', () =>
-  Effect.gen(function* () {
-    const events: ReadonlyArray<AgUiEvent> = [
-      { type: 'RUN_STARTED', threadId: 't', runId: 'r' },
-      { type: 'STATE_SNAPSHOT', snapshot: null },
-      { type: 'RUN_FINISHED', threadId: 't', runId: 'r' },
-    ];
-    const frames = yield* Effect.forEach(events, encodeFrame);
-    const joined = new Uint8Array(frames.reduce((n, f) => n + f.length, 0));
-    frames.reduce((offset, f) => {
-      joined.set(f, offset);
-      return offset + f.length;
-    }, 0);
-    const pieces = Array.from({ length: joined.length }, (_, i) =>
-      joined.slice(i, i + 1)
-    );
-    const decoded = yield* decodeFrames(Stream.fromIterable(pieces)).pipe(
-      Stream.runCollect
-    );
-    assert.deepStrictEqual(decoded, events);
-  })
+it.effect(
+  'frames a stream of events and reads it back across chunk boundaries',
+  () =>
+    Effect.gen(function* () {
+      const events: ReadonlyArray<AgUiEvent> = [
+        { type: 'RUN_STARTED', threadId: 't', runId: 'r' },
+        { type: 'STATE_SNAPSHOT', snapshot: null },
+        { type: 'RUN_FINISHED', threadId: 't', runId: 'r' },
+      ];
+      const frames = yield* Effect.forEach(events, encodeFrame);
+      const joined = new Uint8Array(frames.reduce((n, f) => n + f.length, 0));
+      frames.reduce((offset, f) => {
+        joined.set(f, offset);
+        return offset + f.length;
+      }, 0);
+      const pieces = Array.from({ length: joined.length }, (_, i) =>
+        joined.slice(i, i + 1)
+      );
+      const decoded = yield* decodeFrames(Stream.fromIterable(pieces)).pipe(
+        Stream.runCollect
+      );
+      assert.deepStrictEqual(decoded, events);
+    })
 );
 
 it.effect('fails a stream that ends inside a frame', () =>
   Effect.gen(function* () {
-    const whole = yield* encodeFrame({ type: 'RUN_STARTED', threadId: 't', runId: 'r' });
-    const exit = yield* decodeFrames(Stream.make(whole.slice(0, whole.length - 1))).pipe(
-      Stream.runDrain,
-      Effect.exit
-    );
+    const whole = yield* encodeFrame({
+      type: 'RUN_STARTED',
+      threadId: 't',
+      runId: 'r',
+    });
+    const exit = yield* decodeFrames(
+      Stream.make(whole.slice(0, whole.length - 1))
+    ).pipe(Stream.runDrain, Effect.exit);
     assert.isTrue(Exit.isFailure(exit));
   })
 );

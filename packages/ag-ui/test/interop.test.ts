@@ -29,7 +29,10 @@ class ProtoHttpAgent extends HttpAgent {
     const init = super.requestInit(input);
     return {
       ...init,
-      headers: { ...(init.headers as Record<string, string>), Accept: PROTO_MEDIA_TYPE },
+      headers: {
+        ...(init.headers as Record<string, string>),
+        Accept: PROTO_MEDIA_TYPE,
+      },
     };
   }
 }
@@ -39,7 +42,9 @@ const runReference = (encoding: 'sse' | 'proto') =>
   Effect.gen(function* () {
     const url = `${yield* serverUrl}${AGENT_PATH}`;
     const agent =
-      encoding === 'proto' ? new ProtoHttpAgent({ url }) : new HttpAgent({ url });
+      encoding === 'proto'
+        ? new ProtoHttpAgent({ url })
+        : new HttpAgent({ url });
     let events: ReadonlyArray<unknown> = [];
     yield* Effect.tryPromise({
       try: () =>
@@ -60,24 +65,28 @@ const runReference = (encoding: 'sse' | 'proto') =>
 const replay: Agent = () => Stream.fromIterable(richRun);
 
 layer(testServer(replay, { proto: true }))('the reference HttpAgent', (it) => {
-  it.effect('runs against our server over SSE without a verification error', () =>
-    Effect.gen(function* () {
-      const events = yield* runReference('sse');
-      assert.deepStrictEqual(
-        events.map((event) => (event as AgUiEvent).type),
-        richRun.map((event) => event.type)
-      );
-    })
+  it.effect(
+    'runs against our server over SSE without a verification error',
+    () =>
+      Effect.gen(function* () {
+        const events = yield* runReference('sse');
+        assert.deepStrictEqual(
+          events.map((event) => (event as AgUiEvent).type),
+          richRun.map((event) => event.type)
+        );
+      })
   );
 
-  it.effect('runs against our server over protobuf without a verification error', () =>
-    Effect.gen(function* () {
-      const events = yield* runReference('proto');
-      assert.deepStrictEqual(
-        events.map((event) => (event as AgUiEvent).type),
-        richRun.map((event) => event.type)
-      );
-    })
+  it.effect(
+    'runs against our server over protobuf without a verification error',
+    () =>
+      Effect.gen(function* () {
+        const events = yield* runReference('proto');
+        assert.deepStrictEqual(
+          events.map((event) => (event as AgUiEvent).type),
+          richRun.map((event) => event.type)
+        );
+      })
   );
 });
 
@@ -87,7 +96,9 @@ it.effect('reads the SSE that the reference EventEncoder writes', () =>
     const bytes = new TextEncoder().encode(
       richRun.map((event) => encoder.encodeSSE(event as never)).join('')
     );
-    const decoded = yield* decodeSse(Stream.make(bytes)).pipe(Stream.runCollect);
+    const decoded = yield* decodeSse(Stream.make(bytes)).pipe(
+      Stream.runCollect
+    );
     assert.deepStrictEqual(decoded, richRun);
   })
 );
@@ -102,7 +113,10 @@ it.effect('writes the same SSE frame as the reference EventEncoder', () =>
       subagentRunId: 's-1',
       timestamp: 1,
     };
-    assert.strictEqual(yield* encodeSse(event), encoder.encodeSSE(event as never));
+    assert.strictEqual(
+      yield* encodeSse(event),
+      encoder.encodeSSE(event as never)
+    );
   })
 );
 

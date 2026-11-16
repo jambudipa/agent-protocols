@@ -47,7 +47,8 @@ const packagesOf = (entry: string) =>
 
 /** Whether a package is one of the optional peers. */
 const isOptionalPeer = (name: string) =>
-  name.startsWith('@bufbuild/protobuf') || name.startsWith('@effect/platform-node');
+  name.startsWith('@bufbuild/protobuf') ||
+  name.startsWith('@effect/platform-node');
 
 for (const entry of ['index.ts', 'server/index.ts', 'client/index.ts']) {
   it.effect(`${entry} loads no optional peer`, () =>

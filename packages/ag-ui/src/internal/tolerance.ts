@@ -55,7 +55,11 @@ const PATCH_OPS: ReadonlyArray<unknown> = [
 ];
 
 /** The members of `RunFinishedOutcome`. */
-const RUN_OUTCOMES: ReadonlyArray<unknown> = ['success', 'interrupt', 'cancelled'];
+const RUN_OUTCOMES: ReadonlyArray<unknown> = [
+  'success',
+  'interrupt',
+  'cancelled',
+];
 
 /** The members of `SubagentFinishedOutcome`. */
 const SUBAGENT_OUTCOMES: ReadonlyArray<unknown> = ['success', 'suspended'];

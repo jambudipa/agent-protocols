@@ -44,8 +44,9 @@ const unquote = (value: string) =>
 
 /** Parses one media range, or none when it is malformed. */
 const parseRange = (text: string, index: number): Option.Option<Range> => {
-  return Option.map(Option.fromNullishOr(MEDIA_RANGE.exec(text.trim())), (match) =>
-    toRange(match, index)
+  return Option.map(
+    Option.fromNullishOr(MEDIA_RANGE.exec(text.trim())),
+    (match) => toRange(match, index)
   );
 };
 
@@ -94,7 +95,10 @@ const specify = (offered: Range, range: Range): Option.Option<Priority> => {
   if (!paramsMatch) return Option.none();
   return Option.some({
     q: range.q,
-    s: (sameType ? 4 : 0) | (sameSubtype ? 2 : 0) | (range.params.length > 0 ? 1 : 0),
+    s:
+      (sameType ? 4 : 0) |
+      (sameSubtype ? 2 : 0) |
+      (range.params.length > 0 ? 1 : 0),
     o: range.index,
   });
 };
@@ -136,9 +140,7 @@ export const preferredMediaType = (
     Order.make<{ q: number; s: number; o: number; index: number }>(
       (a, b) =>
         Math.sign(b.q - a.q || b.s - a.s || a.o - b.o || a.index - b.index) as
-          | -1
-          | 0
-          | 1
+          -1 | 0 | 1
     )
   );
   return Option.map(Arr.head(ranked), (entry) => entry.type);

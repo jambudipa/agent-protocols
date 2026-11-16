@@ -50,7 +50,9 @@ const nonEmpty = (key: string, list: unknown): Loose =>
 
 /** `TEXT_MESSAGE_START` to `textMessageStart`, the name of the envelope arm. */
 const armOf = (type: string): string =>
-  type.toLowerCase().replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+  type
+    .toLowerCase()
+    .replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
 
 /** The event type that an envelope arm carries. */
 const typeOfArm = (arm: string): string =>
@@ -131,7 +133,10 @@ const toWireSubagentOutcome = (outcome: unknown): Loose => {
 const toWireFields = (type: string, fields: Loose): Loose => {
   switch (type) {
     case 'MESSAGES_SNAPSHOT':
-      return { ...fields, messages: asArray(fields['messages']).map(toWireMessage) };
+      return {
+        ...fields,
+        messages: asArray(fields['messages']).map(toWireMessage),
+      };
     case 'RUN_STARTED':
       return 'input' in fields
         ? { ...fields, input: toWireInput(fields['input']) }
@@ -234,7 +239,9 @@ const fromWireSource = (
 ): Effect.Effect<Option.Option<Loose>, AgUiDecodeError> => {
   const arms = Object.entries(asLoose(value));
   if (arms.length > 1) {
-    return Effect.fail(invalid('Invalid event: source carries more than one arm'));
+    return Effect.fail(
+      invalid('Invalid event: source carries more than one arm')
+    );
   }
   return Effect.succeed(
     Option.map(Option.fromUndefinedOr(arms[0]), ([type, fields]) => ({
@@ -254,7 +261,9 @@ const fromWirePart = (
 ): Effect.Effect<Option.Option<Loose>, AgUiDecodeError> => {
   const arms = Object.entries(asLoose(value));
   if (arms.length > 1) {
-    return Effect.fail(invalid('Invalid event: content part carries more than one arm'));
+    return Effect.fail(
+      invalid('Invalid event: content part carries more than one arm')
+    );
   }
   const arm = arms[0];
   if (arm === undefined) return Effect.succeed(Option.none());
@@ -290,7 +299,9 @@ const fromWireMessage = (
     const known = KNOWN_ROLES.includes(role);
     const parts = asArray(contentParts);
     if (!known && carriers(wire) > 1) {
-      return yield* invalid('Invalid event: message carries more than one content form');
+      return yield* invalid(
+        'Invalid event: message carries more than one content form'
+      );
     }
     const usesParts = known ? PARTS_ROLES.includes(role) : parts.length > 0;
     const usesMap = known
@@ -298,16 +309,24 @@ const fromWireMessage = (
       : !usesParts && activityContent !== undefined;
     if (known) {
       if (!usesParts && parts.length > 0) {
-        return yield* invalid('Invalid event: message carries content parts for a role that has none');
+        return yield* invalid(
+          'Invalid event: message carries content parts for a role that has none'
+        );
       }
       if (activityContent !== undefined && !usesMap) {
-        return yield* invalid('Invalid event: message carries activity content for a non-activity role');
+        return yield* invalid(
+          'Invalid event: message carries activity content for a non-activity role'
+        );
       }
       if (usesMap && content !== undefined) {
-        return yield* invalid('Invalid event: activity content cannot ride with other content forms');
+        return yield* invalid(
+          'Invalid event: activity content cannot ride with other content forms'
+        );
       }
       if (usesParts && content !== undefined && parts.length > 0) {
-        return yield* invalid('Invalid event: message carries both string content and content parts');
+        return yield* invalid(
+          'Invalid event: message carries both string content and content parts'
+        );
       }
     }
     const body =
@@ -324,9 +343,7 @@ const fromWireMessage = (
   });
 
 /** An `ag_ui.RunAgentInput` to a `RunAgentInput`. */
-const fromWireInput = (
-  value: unknown
-): Effect.Effect<Loose, AgUiDecodeError> =>
+const fromWireInput = (value: unknown): Effect.Effect<Loose, AgUiDecodeError> =>
   Effect.map(
     Effect.forEach(asArray(asLoose(value)['messages']), fromWireMessage),
     (messages) => {
@@ -377,7 +394,9 @@ const fromWireRunOutcome = (fields: Loose): Loose => {
     ...rest,
     outcome: {
       type,
-      ...(type === 'interrupt' ? { interrupts: waiting } : nonEmpty('interrupts', waiting)),
+      ...(type === 'interrupt'
+        ? { interrupts: waiting }
+        : nonEmpty('interrupts', waiting)),
       ...nonEmpty('pendingToolCallIds', pending),
     },
   };
@@ -408,7 +427,10 @@ const fromWireFields = (
       );
     case 'RUN_STARTED':
       return 'input' in fields
-        ? Effect.map(fromWireInput(fields['input']), (input) => ({ ...fields, input }))
+        ? Effect.map(fromWireInput(fields['input']), (input) => ({
+            ...fields,
+            input,
+          }))
         : Effect.succeed(fields);
     case 'RUN_FINISHED':
       return Effect.succeed({
@@ -423,20 +445,31 @@ const fromWireFields = (
     case 'SUBAGENT_FINISHED':
       return Effect.succeed(fromWireSubagentOutcome(fields));
     case 'STATE_DELTA':
-      return Effect.succeed({ ...fields, delta: fromWirePatch(fields['delta']) });
+      return Effect.succeed({
+        ...fields,
+        delta: fromWirePatch(fields['delta']),
+      });
     case 'ACTIVITY_DELTA':
-      return Effect.succeed({ ...fields, patch: fromWirePatch(fields['patch']) });
+      return Effect.succeed({
+        ...fields,
+        patch: fromWirePatch(fields['patch']),
+      });
     case 'TOOL_CALL_RESULT': {
       const { content, contentParts, ...rest } = fields;
       const parts = asArray(contentParts);
       if (content !== undefined && parts.length > 0) {
         return Effect.fail(
-          invalid('Invalid event: content carries both string content and content parts')
+          invalid(
+            'Invalid event: content carries both string content and content parts'
+          )
         );
       }
       return content !== undefined
         ? Effect.succeed({ ...rest, content })
-        : Effect.map(fromWireParts(parts), (decoded) => ({ ...rest, content: decoded }));
+        : Effect.map(fromWireParts(parts), (decoded) => ({
+            ...rest,
+            content: decoded,
+          }));
     }
     default:
       return Effect.succeed(fields);
@@ -444,7 +477,9 @@ const fromWireFields = (
 };
 
 /** The ProtoJSON of a decoded envelope, with every implicit field present. */
-const envelopeJson = (bytes: Uint8Array): Effect.Effect<Loose, AgUiDecodeError> =>
+const envelopeJson = (
+  bytes: Uint8Array
+): Effect.Effect<Loose, AgUiDecodeError> =>
   Effect.try({
     try: () => {
       const envelope = fromBinary(EventSchema, bytes);

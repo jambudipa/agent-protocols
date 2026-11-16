@@ -2,13 +2,14 @@
 
 Native, installable [Effect v4](https://effect.website/docs/v4/) implementations
 of the agent protocols listed at [agentprotocol.ai](https://agentprotocol.ai/),
-plus the agent-to-UI presentation format.
+plus AG-UI and the agent-to-UI presentation format.
 
 | Layer          | Protocol                                                                      | Package                                                          | Status                      |
 | -------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------- |
 | Agent to tools | MCP                                                                           | none: reuse `effect/ai` (see below)                              | Available in `effect@4.1.4` |
 | Human to agent | [Agent Protocol v1](https://github.com/AI-Engineer-Foundation/agent-protocol) | [`@jambudipa/agent-protocol`](packages/agent-protocol/README.md) | Server and client           |
 | Agent to agent | [A2A v1.0](https://a2a-protocol.org)                                          | [`@jambudipa/a2a`](packages/a2a/README.md)                       | Server and client           |
+| Agent to UI    | [AG-UI 1.0](https://docs.ag-ui.com)                                           | [`@jambudipa/ag-ui`](packages/ag-ui/README.md)                   | Server and client           |
 | Agent to UI    | jam-flow presentation wire format                                             | [`@jambudipa/presentation`](packages/presentation/README.md)     | V1 and T5 contracts         |
 
 ## MCP: reuse `effect/ai`

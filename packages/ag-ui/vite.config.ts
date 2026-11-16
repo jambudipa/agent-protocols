@@ -12,6 +12,7 @@ const entry = (file: string) =>
 const entries = {
   index: entry('index.ts'),
   'server/index': entry('server/index.ts'),
+  'client/index': entry('client/index.ts'),
   'proto/index': entry('proto/index.ts'),
 };
 

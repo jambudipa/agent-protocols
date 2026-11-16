@@ -73,11 +73,13 @@ export class AgUiTransportError extends Schema.TaggedError<AgUiTransportError>()
 ) {}
 
 /**
- * Every failure of `AgUiClient.run`.
+ * Every failure of `AgUiClient.run`. `AgUiEncodeError` means that the input
+ * itself does not match `RunAgentInput`, so nothing was sent.
  *
  * @since 0.1.0
  */
 export type AgUiClientError =
+  | AgUiEncodeError
   | AgUiDecodeError
   | AgUiVerifyError
   | AgUiHttpError

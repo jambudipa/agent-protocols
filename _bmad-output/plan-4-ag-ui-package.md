@@ -98,7 +98,7 @@ const echo = (input: RunAgentInput) => Stream.make(
 
 ## Implementation Notes
 
-- Implemented in 18 commits from `8ff10cf` to `b949dfc`, one or more per task.
+- Implemented in 14 commits from `8ff10cf` to `b949dfc`, one or more per task.
 - Tolerance: unknown keys drop through the schemas; unknown union members (message role, content part, part source, JSON Patch `op`, run and subagent `outcome`) are stripped by a pre-decode pass (`src/internal/tolerance.ts`), as the reference enforcement stage does. An event of an unknown `type` (including `THINKING_*` and `META_EVENT`) is dropped with a logged warning.
 - Decode errors render as a JSON array of `"<pointer>: expected X, received Y"` lines. The JSON form is needed because the fixture `reasoning-message-wrong-role-fatal` expects `expected \"reasoning\"` with escaped quotes, the shape of a zod error message.
 - Protobuf: the converters port `@ag-ui/proto`'s reshaping (merged `Message` carriers, flat outcomes, the `op` enum); protobuf-es `fromJson`/`toJson` encode only the leaves (`Value`, `Struct`, `int64`). Frames are byte-identical to `EventEncoder` for the sample run. An unknown envelope arm fails, per the matrix; the reference drops it.

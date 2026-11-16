@@ -8,9 +8,9 @@ baseline_revision: '35b5a1340141e32a0445f2c21dc3aa74ff16e7b2'
 route: 'full'
 route_source: 'auto'
 risk: 'medium'
-review: ''
-review_source: ''
-lenses_ran: []
+review: 'quick'
+review_source: 'pinned'
+lenses_ran: ['quick']
 review_loop_iteration: 0
 context:
   - '~/.agents/guidance/typescript-effect/AGENTS.md'
@@ -109,3 +109,11 @@ const echo = (input: RunAgentInput) => Stream.make(
 ## Plan Change Log
 
 ## Review Triage Log
+
+### Pass 1 (quick lens, 2026-11-16) -- high 0, medium 2, low 0, false 0, maybe-false 0
+
+| Verdict | Route | Finding | Evidence / action |
+|---|---|---|---|
+| medium | patch | `.changeset/ag-ui-package.md` `minor` + `package.json` `0.1.0` releases first as 0.2.0 | No `@jambudipa/ag-ui@*` tag exists; other packages first released at `@0.1.0`; every `@since` says 0.1.0. Patch: version 0.0.0. |
+| medium | patch | `src/Events.ts` `decodeSse` normalises CR per chunk, so a CRLF split between chunks ends a frame early | Line 761 maps each decoded chunk before `mapAccumEffect` buffers it; a split CRLF yields `\n\n`, which `splitFrames` treats as a frame end. Patch: normalise after buffering, hold a trailing `\r`, add a split-chunk test. |
+

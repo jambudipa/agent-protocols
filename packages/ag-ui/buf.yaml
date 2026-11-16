@@ -1,0 +1,6 @@
+# The vendored AG-UI protobuf definitions under spec/proto (package ag_ui).
+# No remote module is used, so `npm run generate` works offline and gives the
+# same output every time. buf supplies google/protobuf/struct.proto itself.
+version: v2
+modules:
+  - path: spec/proto

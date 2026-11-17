@@ -1,6 +1,6 @@
 {
   "name": "@jambudipa/presentation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The agent-to-UI presentation wire format, V1 and T5 contracts, for Effect v4.",
   "keywords": [
     "effect",
